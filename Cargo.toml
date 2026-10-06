@@ -1,0 +1,56 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ember",
+    "crates/ember-core",
+    "crates/ember-foundation",
+    "crates/ember-macros",
+    "crates/ember-actuator",
+    "crates/ember-scheduler",
+    "crates/ember-security",
+    "crates/ember-web",
+    "crates/ember-config",
+    "crates/ember-cli",
+    "crates/ember-build"
+    , "crates/ember-bootui"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ember-rs/ember"
+rust-version = "1.82"
+
+[workspace.dependencies]
+anyhow = "1"
+base64 = "0.22"
+axum = "0.8"
+jsonwebtoken = "9"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde_json = "1"
+clap = { version = "4.5", features = ["derive"] }
+ember = { path = "crates/ember" }
+ember-build = { path = "crates/ember-build" }
+ember-bootui = { path = "crates/ember-bootui" }
+ember-config = { path = "crates/ember-config" }
+ember-core = { path = "crates/ember-core" }
+ember-foundation = { path = "crates/ember-foundation" }
+ember-macros = { path = "crates/ember-macros" }
+ember-actuator = { path = "crates/ember-actuator" }
+ember-scheduler = { path = "crates/ember-scheduler" }
+ember-security = { path = "crates/ember-security" }
+ember-web = { path = "crates/ember-web" }
+http = "1"
+inventory = "0.3"
+proc-macro2 = "1"
+quote = "1"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+syn = { version = "2", features = ["full", "extra-traits"] }
+thiserror = "2"
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

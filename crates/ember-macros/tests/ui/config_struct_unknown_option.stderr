@@ -1,0 +1,5 @@
+error: unknown config option; expected `prefix = "..."`
+ --> tests/ui/config_struct_unknown_option.rs:4:10
+  |
+4 | #[config(required)]
+  |          ^^^^^^^^

@@ -1,0 +1,5 @@
+error: unknown field config option; expected `required`
+ --> tests/ui/config_required_unknown_option.rs:5:14
+  |
+5 |     #[config(optional)]
+  |              ^^^^^^^^

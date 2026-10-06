@@ -1,0 +1,5 @@
+error: bean providers currently require non-generic functions
+ --> tests/ui/bean_generic.rs:4:1
+  |
+4 | fn generic_provider<T>() -> String {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
