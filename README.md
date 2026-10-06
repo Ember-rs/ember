@@ -1,11 +1,26 @@
 # Ember
 
-Ember is an open-source, batteries-included web application framework for
-Rust. It gives common applications a structured composition root while keeping
-Axum, Tokio, Tower, Serde, and tracing visible at the edges.
+Ember is an open-source, batteries-included web application framework for Rust.
+It gives Rust applications a clear structure for composition, configuration,
+startup, routing, logging, security, and operational endpoints while keeping
+the underlying Rust ecosystem visible and accessible.
 
-The project is an MVP. It currently focuses on one complete path and a first
-shape-aware project generator:
+Ember is designed for teams that want the productive defaults commonly found
+in larger application frameworks without giving up Rust's compile-time safety,
+performance, or control. It builds on familiar technologies such as Axum,
+Tokio, Tower, Serde, and `tracing` instead of hiding them behind a proprietary
+runtime.
+
+## What is Ember?
+
+Ember provides the application infrastructure around a Rust web service. Its
+facade crate and procedural macros let developers define typed services,
+controllers, routes, configuration, lifecycle hooks, and scheduled tasks in a
+consistent application model. The CLI can generate a ready-to-run project so
+new applications start with useful conventions instead of an empty directory.
+
+The current MVP focuses on one complete path and a first shape-aware project
+generator:
 
 ~~~text
 typed components -> generated routes -> Axum router -> Tokio server
@@ -15,6 +30,38 @@ The starter generator currently supports web applications, JSON APIs,
 services, and modular monoliths. The starters use the same Ember programming
 model; the selected shape changes the sample code and layout, not the runtime
 architecture.
+
+## Why use Ember?
+
+- **Compile-time safety.** Services, dependencies, routes, and configuration
+  are represented with ordinary Rust types and compiler-checked code. Ember
+  does not depend on runtime reflection, string-key lookups, or a global service
+  locator.
+- **Fast project startup.** `ember new` creates a working application with a
+  Cargo manifest, build script, configuration defaults, source layout, and a
+  representative example.
+- **Batteries included.** The framework provides conventions for routing,
+  configuration profiles, structured logging, graceful shutdown, health and
+  readiness endpoints, metrics, security options, and scheduled tasks.
+- **Familiar Rust foundations.** Ember extends Axum, Tokio, Tower, Serde, and
+  `tracing`; developers can use their existing knowledge and add direct
+  dependencies when they need lower-level control.
+- **Clear application structure.** Generated applications separate controllers,
+  services, repositories, configuration, models, and errors. This makes the
+  codebase easier to navigate as the application grows.
+- **Operational by default, secure by design.** The default listener is local,
+  request bodies are limited, request bodies are not logged, and operational
+  features such as actuator endpoints and authentication are opt-in and
+  configurable.
+- **A gradual path from convention to control.** Teams can use the generated
+  application model, customize the router and components, or replace the
+  standard runner with an application-owned Axum/Tokio entry point when a more
+  specialized server boundary is needed.
+
+Ember is currently an MVP. Its goal is to provide useful defaults without
+pretending that the framework is finished; the roadmap treats the current HTTP
+slice as the foundation for broader web application, API, monolith, and
+microservice support.
 
 The product rule for Ember is broader than this first slice: Ember should
 provide the default application infrastructure developers need for web
