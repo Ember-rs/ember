@@ -19,9 +19,8 @@ typed components
 ```mermaid
 flowchart TD
     A[Application source] --> B[Procedural macros]
-    A --> C[build.rs]
     B --> D[Typed component metadata]
-    C --> E[Generated module tree]
+    B --> E[Generated module tree]
     D --> F[Static route descriptors]
     E --> F
     F --> G[Axum router]
@@ -29,6 +28,7 @@ flowchart TD
     I --> G
     G --> J[Tokio server]
     I --> J
+    K[Optional build.rs] -.-> L[Typed dependency graph]
 ```
 
 ## Workspace boundaries
@@ -56,13 +56,15 @@ flowchart LR
 
 ## Compile-time composition
 
-Ember uses procedural macros and build-time source discovery to generate typed
-registrations. Constructors use Rust types and `Default`-based dependency
-construction where supported. A missing dependency is therefore a compiler
-error rather than a late runtime lookup failure.
+Ember uses procedural macros to discover application modules and generate typed
+registrations during compilation. Constructors use Rust types and
+`Default`-based dependency construction where supported. A missing dependency
+is therefore a compiler error rather than a late runtime lookup failure.
 
 The default path uses static route descriptors. It does not perform runtime
 filesystem scanning, reflection-based discovery, or string-key service lookup.
+The separate `ember_build::discover_graph` function is opt-in and requires an
+application-owned build script.
 
 ## Runtime responsibilities
 
@@ -72,9 +74,10 @@ Applications can use `build_router()` or the Axum/Tower re-exports when they
 need a custom server boundary. Replacing the standard runner transfers those
 responsibilities to the application.
 
-## Current and future scope
+## Current implementation
 
-The current MVP includes the HTTP path, project generation, configuration,
-logging, optional operational endpoints, security options, and scheduling.
-Typed graph integration, richer lifecycle composition, database adapters, and
-additional shape-specific middleware remain roadmap work.
+The current implementation includes the HTTP path, project generation,
+configuration, logging, optional operational endpoints, security options, and
+scheduling. The typed graph is available through the opt-in
+`ember_build::discover_graph` build-script function; the standard starter does
+not enable it automatically.

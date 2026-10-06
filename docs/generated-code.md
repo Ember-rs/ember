@@ -8,7 +8,6 @@ generate a hidden application bundle or require a special editor.
 ```text
 my-app/
 ├── Cargo.toml
-├── build.rs
 ├── README.md
 └── src/
     ├── main.rs
@@ -29,10 +28,14 @@ The monolith starter additionally creates a bounded module under
 
 ## Source discovery
 
-`build.rs` calls `ember_build::discover("src/main")`. Ember writes the
-generated module tree to Cargo's `OUT_DIR`. New Rust files under `src/main/`
-can therefore participate without manually adding every `mod` declaration to
-`main.rs`.
+The generated `#[ember::main]` macro discovers Rust files below `src/main/`
+during compilation and emits the module declarations needed by the application.
+New Rust files under `src/main/` can therefore participate without manually
+adding every `mod` declaration to `main.rs`.
+
+Applications that opt into the typed dependency graph can add an application-
+owned `build.rs` and call `ember_build::discover_graph("src/main")`. That is a
+separate path from the default starter.
 
 The generated files remain normal Rust code. Visibility, imports, compiler
 diagnostics, and application ownership are still explicit.
@@ -43,17 +46,15 @@ diagnostics, and application ownership are still explicit.
 sequenceDiagram
     participant Dev as Developer
     participant Cargo
-    participant Build as build.rs
     participant Ember as Ember macros
     participant App as Application
     participant Server as Axum/Tokio
 
     Dev->>Cargo: cargo run
-    Cargo->>Build: Compile build script
-    Build->>Build: Discover src/main/
-    Build-->>Cargo: Write ember_modules.rs
+    Cargo->>Ember: Expand #[ember::main]
+    Ember->>Ember: Discover src/main/
     Cargo->>Ember: Expand typed components and routes
-    Ember-->>App: Compile generated registrations
+    Ember-->>App: Compile modules and registrations
     App->>Server: Build router and start server
 ```
 

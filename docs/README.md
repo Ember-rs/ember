@@ -27,14 +27,14 @@ APIs, services, and modular monoliths.
 ```mermaid
 flowchart LR
     A[ember new] --> B[Typed Rust components]
-    B --> C[Build-time discovery]
+    B --> C[Compile-time module discovery]
     C --> D[Generated routes]
     D --> E[Axum router]
     E --> F[Tokio server]
 ```
 
-The documentation describes the current implementation. Planned features are
-marked as roadmap work rather than presented as supported behavior.
+The documentation describes the current implementation and calls out current
+limitations where they affect how an application is built.
 
 ## Workspace crates
 

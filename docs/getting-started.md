@@ -5,8 +5,7 @@
 - Rust 1.82 or newer
 - Cargo
 
-The repository currently runs the CLI from the workspace because Ember is not
-published as a stable crate yet.
+The CLI is currently run from this workspace.
 
 ## Generate an application
 
@@ -72,4 +71,3 @@ async fn main() {}
 
 See the [generated-code guide](generated-code.md) for the project layout and
 the [architecture guide](architecture.md) for the runtime flow.
-

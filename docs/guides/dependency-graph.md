@@ -20,10 +20,7 @@ usually enough.
 - graph discovery happens at build time;
 - dependencies are represented by Rust types, not string names;
 - the graph does not provide a runtime service locator;
-- application-owned startup and router composition remain explicit; and
-- qualifiers, scopes, and full controller/lifecycle integration are roadmap
-  work.
+- application-owned startup and router composition remain explicit.
 
 See the implementation and tests in `crates/ember-build` for the current API
 surface and supported graph shapes.
-

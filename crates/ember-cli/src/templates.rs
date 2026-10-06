@@ -261,7 +261,7 @@ fn project_readme(kind: ApplicationKind) -> String {
     const TEMPLATE: &str = r#"# Ember {{KIND}} application
 
 This project was generated as {{DESCRIPTION}}. It uses the standard Ember
-facade, build-time source discovery, and `#[ember::main]` entry point.
+facade, compile-time source discovery, and `#[ember::main]` entry point.
 
 The canonical application kinds are `web`, `api`, `service`, and `monolith`.
 The CLI also accepts `microservice` as an alias for `service`.
@@ -320,13 +320,13 @@ Use `cargo check` and `cargo test` for the generated project. Run it and call
 the representative route above for a local HTTP smoke test; JSON starters
 should return `application/json`. The repository's complete starter smoke
 also checks graceful shutdown, but requires an environment that permits
-loopback listeners. To take control, edit or replace the generated Rust
-files, use `ConfigLoader`, compose `build_router()` with the
+loopback listeners. To take control, edit or replace the generated Rust files,
+use `ConfigLoader`, compose `build_router()` with the
 `ember::web::axum`/Tower re-exports, or replace `#[ember::main]` with an
-application-owned Axum/Tokio server boundary. A custom entry point must also
-include the generated module bridge (`include!(concat!(env!("OUT_DIR"),
-"/ember_modules.rs"));`) or declare equivalent modules manually so static
-route registrations remain linked. Tokio is not a stable public Ember
+application-owned Axum/Tokio server boundary. A custom entry point must
+declare the application modules manually so static route registrations remain
+linked. An application that explicitly uses `ember_build::discover` can instead
+include its generated module bridge. Tokio is not a stable public Ember
 re-export, so an application-owned Tokio entry point should declare `tokio`
 directly. Axum can use the `ember::web::axum` re-export or a direct `axum`
 dependency. Replacing `#[ember::main]` transfers configuration, startup, and
@@ -334,15 +334,14 @@ graceful-shutdown ownership to the application; `build_router()` only builds
 the router and does not perform that orchestration.
 
 Starter generation is **Current**. The opt-in typed generated dependency graph
-is also **Current**, but this starter uses the legacy build-time module
-discovery path and does not compose graph values automatically. Ember's
+is also **Current**, but this starter uses the standard `#[ember::main]`
+compile-time module discovery path and does not compose graph values
+automatically. Ember's
 standard health, liveness, readiness, and info endpoints can be enabled from
 the application configuration, including Spring Boot-compatible `/actuator`
-aliases. Database adapters, security, and shape-specific middleware remain
-**Next** or **Later** roadmap work. Runtime filesystem
-scanning, reflection-based discovery, a global mutable container, and
-string-key dependency lookup are **Rejected for now** as the primary
-architecture.
+aliases. Runtime filesystem scanning, reflection-based discovery, a global
+mutable container, and string-key dependency lookup are not used as the
+primary architecture.
 "#;
     TEMPLATE
         .replace("{{KIND}}", kind.as_str())
