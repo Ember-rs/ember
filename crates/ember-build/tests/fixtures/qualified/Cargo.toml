@@ -1,0 +1,13 @@
+[package]
+name = "ember-graph-qualified-fixture"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+ember = { path = "../../../../ember" }
+
+[build-dependencies]
+ember-build = { path = "../../../../ember-build" }

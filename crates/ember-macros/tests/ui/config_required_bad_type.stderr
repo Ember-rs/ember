@@ -1,0 +1,5 @@
+error: config(required) supports only String, std::string::String, Option<T>, or std::option::Option<T>
+ --> tests/ui/config_required_bad_type.rs:6:11
+  |
+6 |     port: u16,
+  |           ^^^

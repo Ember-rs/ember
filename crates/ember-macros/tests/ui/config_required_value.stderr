@@ -1,0 +1,5 @@
+error: config(required) does not take a value; use `#[config(required)]`
+ --> tests/ui/config_required_value.rs:5:14
+  |
+5 |     #[config(required = true)]
+  |              ^^^^^^^^^^^^^^^

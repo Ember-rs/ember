@@ -1,0 +1,7 @@
+error: the service attribute takes no arguments
+ --> tests/ui/service_arguments.rs:3:1
+  |
+3 | #[service(unexpected)]
+  | ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `service` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,0 +1,5 @@
+error: config(required) requires a named field
+ --> tests/ui/config_required_tuple.rs:4:22
+  |
+4 | struct InvalidConfig(#[config(required)] String);
+  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,5 @@
+error: duplicate config option `prefix`
+ --> tests/ui/config_struct_duplicate_prefix.rs:4:28
+  |
+4 | #[config(prefix = "first", prefix = "second")]
+  |                            ^^^^^^
