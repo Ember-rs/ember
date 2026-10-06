@@ -1,11 +1,26 @@
 # Ember
 
-Ember is an open-source, batteries-included web application framework for
-Rust. It gives common applications a structured composition root while keeping
-Axum, Tokio, Tower, Serde, and tracing visible at the edges.
+Ember is an open-source, batteries-included web application framework for Rust.
+It gives Rust applications a clear structure for composition, configuration,
+startup, routing, logging, security, and operational endpoints while keeping
+the underlying Rust ecosystem visible and accessible.
 
-The project is an MVP. It currently focuses on one complete path and a first
-shape-aware project generator:
+Ember is designed for teams that want the productive defaults commonly found
+in larger application frameworks without giving up Rust's compile-time safety,
+performance, or control. It builds on familiar technologies such as Axum,
+Tokio, Tower, Serde, and `tracing` instead of hiding them behind a proprietary
+runtime.
+
+## What is Ember?
+
+Ember provides the application infrastructure around a Rust web service. Its
+facade crate and procedural macros let developers define typed services,
+controllers, routes, configuration, lifecycle hooks, and scheduled tasks in a
+consistent application model. The CLI can generate a ready-to-run project so
+new applications start with useful conventions instead of an empty directory.
+
+The current MVP focuses on one complete path and a first shape-aware project
+generator:
 
 ~~~text
 typed components -> generated routes -> Axum router -> Tokio server
@@ -16,17 +31,93 @@ services, and modular monoliths. The starters use the same Ember programming
 model; the selected shape changes the sample code and layout, not the runtime
 architecture.
 
-The product rule for Ember is broader than this first slice: Ember should
-provide the default application infrastructure developers need for web
-applications, APIs, monoliths, and microservices out of the box. The roadmap
-therefore treats the current HTTP slice as the foundation, not the final
-framework boundary.
+## Why use Ember?
+
+- **Compile-time safety.** Services, dependencies, routes, and configuration
+  are represented with ordinary Rust types and compiler-checked code. Ember
+  does not depend on runtime reflection, string-key lookups, or a global service
+  locator.
+- **Fast project startup.** `ember new` creates a working application with a
+  Cargo manifest, configuration defaults, source layout, and a representative
+  example.
+- **Batteries included.** The framework provides conventions for routing,
+  configuration profiles, structured logging, graceful shutdown, health and
+  readiness endpoints, metrics, security options, and scheduled tasks.
+- **Familiar Rust foundations.** Ember extends Axum, Tokio, Tower, Serde, and
+  `tracing`; developers can use their existing knowledge and add direct
+  dependencies when they need lower-level control.
+- **Clear application structure.** Generated applications separate controllers,
+  services, repositories, configuration, models, and errors. This makes the
+  codebase easier to navigate as the application grows.
+- **Operational by default, secure by design.** The default listener is local,
+  request bodies are limited, request bodies are not logged, and operational
+  features such as actuator endpoints and authentication are opt-in and
+  configurable.
+- **A gradual path from convention to control.** Teams can use the generated
+  application model, customize the router and components, or replace the
+  standard runner with an application-owned Axum/Tokio entry point when a more
+  specialized server boundary is needed.
+
+Ember is currently an MVP. The implemented application shapes are web
+applications, JSON APIs, services, and modular monoliths.
+
+## Why Rust developers choose Ember
+
+Ember is intended to feel like Rust, not like a foreign runtime dropped on top
+of Rust. The framework favors explicit types, normal Cargo projects, compiler
+errors, and libraries from the standard Rust web ecosystem.
+
+- **No hidden runtime magic.** Component discovery and route registration are
+  generated at build time. There is no runtime filesystem scan, reflection
+  layer, or string-based dependency container to debug in production.
+- **Generated code stays inspectable.** Ember's CLI writes ordinary Rust source
+  files and a normal Cargo project. When something goes wrong, developers can
+  read the generated project, follow the compiler diagnostics, and take
+  ownership of the code.
+- **Use the ecosystem you already know.** Ember exposes Axum, Tower, Serde,
+  Tokio, and `tracing` at the application boundary. Existing middleware,
+  extractors, serializers, test tools, and libraries remain useful.
+- **Abstractions without giving up control.** The standard runner provides
+  sensible application startup and shutdown, while `build_router()` and the
+  lower-level re-exports make it possible to customize the HTTP boundary.
+- **Adopt it incrementally.** Start with one service or generated application,
+  keep direct Rust code where it is clearer, and introduce Ember conventions
+  only where they reduce repetition.
+- **Designed for performance-sensitive services.** Ember builds on async Rust
+  and Axum rather than introducing a separate execution model. The framework's
+  goal is to organize application code without turning the hot path into a
+  dynamic object graph.
+
+## Why contribute to Ember?
+
+Ember is also a place to improve the Rust web development experience itself.
+Contributors can work on focused crates instead of one large runtime: macros,
+configuration, lifecycle management, routing, security, scheduling, the CLI,
+or the project generator can evolve independently behind clear boundaries.
+
+The project is a good fit for Rust developers who want to:
+
+- shape practical conventions for Rust applications;
+- improve compile-time APIs, diagnostics, and generated-code ergonomics;
+- build reusable tooling for Axum and the wider async Rust ecosystem;
+- contribute examples, tests, documentation, or starter templates; and
+- help decide which framework features belong in Ember — and which should stay
+  in existing ecosystem crates.
+
+The current MVP keeps the scope deliberately understandable. New contributors
+can run the workspace checks, inspect a focused crate, add a test or example,
+and discuss a concrete improvement without needing to learn a large runtime
+first. See the [documentation index](docs/README.md) and the [architecture
+guide](docs/architecture.md) before opening a design-heavy change.
 
 ## Quick start from this workspace
 
 ~~~bash
-cargo run -p hello-world
-curl http://127.0.0.1:8080/api/hello/Alice
+cargo run -p ember-cli -- new hello-world
+cd hello-world
+cargo run
+# In another terminal:
+curl http://127.0.0.1:8080/hello/Alice
 # Hello, Alice!
 ~~~
 
@@ -235,7 +326,6 @@ Applications generated by the CLI use compile-time source discovery:
 ~~~text
 my-app/
 ├── Cargo.toml
-├── build.rs
 ├── src/resources/application.yaml
 ├── README.md
 ├── tests/
@@ -255,16 +345,17 @@ my-app/
 The monolith starter additionally includes a bounded `src/main/modules/catalog/`
 module; the other starters do not create that directory.
 
-'build.rs' calls 'ember_build::discover("src/main")'. Ember generates the module
-tree in 'OUT_DIR', so new Rust files under 'src/main/' participate without adding
-manual 'mod' declarations to 'main.rs'. Rust visibility and imports remain
-normal and explicit inside those files.
+'#[ember::main]' discovers the module tree during compilation, so new Rust files
+under 'src/main/' participate without adding manual 'mod' declarations to
+'main.rs'. Rust visibility and imports remain normal and explicit inside those
+files. Applications that opt into the typed graph can use
+'ember_build::discover_graph' from an application-owned 'build.rs'.
 
-The CLI writes fixed, inspectable files: a Cargo manifest, build script,
-configuration defaults under `src/resources/`, a `#[ember::main]` entry point,
-standard responsibility directories under `src/main/`, and the shape-specific sample. API and monolith starters add an
-application-level Serde dependency for their JSON models; web and service
-starters do not.
+The CLI writes fixed, inspectable files: a Cargo manifest, configuration
+defaults under `src/resources/`, a `#[ember::main]` entry point, standard
+responsibility directories under `src/main/`, and the shape-specific sample.
+API and monolith starters add an application-level Serde dependency for their
+JSON models; web and service starters do not.
 
 For Spring-style lifecycle extension points, annotate a struct with
 '#[post_processor]' and implement 'BeanPostProcessor'. It receives typed
@@ -298,9 +389,10 @@ The convention is optional. Edit or replace the generated controllers,
 services, providers, and configuration; use `build_router()` and the
 `ember::web::axum`/Tower re-exports for lower-level HTTP composition; or
 replace `#[ember::main]` with an application-owned Axum/Tokio entry point when
-you need a custom server boundary. That entry point must include
-`include!(concat!(env!("OUT_DIR"), "/ember_modules.rs"));` or declare equivalent
-modules manually so static route registrations remain linked. Tokio is not a
+you need a custom server boundary. That entry point must declare the application
+modules manually so static route registrations remain linked. Applications
+that explicitly use `ember_build::discover` can instead include its generated
+module bridge. Tokio is not a
 stable public Ember re-export, so an application-owned Tokio entry point should
 declare `tokio` directly. Axum can use the `ember::web::axum` re-export or a
 direct `axum` dependency. A custom server-builder API is not part of the
@@ -308,22 +400,18 @@ current starter contract. Replacing `#[ember::main]` transfers configuration,
 startup, and graceful-shutdown ownership to the application; `build_router()`
 only builds the router and does not perform that orchestration.
 
-Starter generation is **Current**. The opt-in generated typed-graph MVP is
-also **Current**, but it is not enabled by the starter templates and does not
-inject values into controllers or `ember::run`. Graph scopes, qualifiers,
-automatic controller/lifecycle integration,
-typed configuration derives, security stack, database adapters, and
-shape-specific middleware presets remain **Next** or **Later** roadmap work.
+Starter generation is current. The opt-in generated typed graph is also
+current, but it is not enabled by the starter templates and does not inject
+values into controllers or `ember::run`.
 Runtime filesystem scanning, reflection-based discovery, a global mutable
 container, and string-key dependency lookup are **Rejected for now** as the
 primary architecture.
 
 ## Documentation
 
-Start with the [documentation index](docs/README.md). It contains the
-Spring-inspired gap analysis, architecture principles, implementation roadmap,
-and usage guides for dependency injection, web handlers, configuration,
-testing, errors, and extension points.
+Start with the [documentation index](docs/README.md). It contains the current
+architecture, getting-started instructions, generated-project guide,
+dependency-graph guide, and contribution instructions.
 
 ## Workspace commands
 
@@ -334,7 +422,7 @@ cargo test --workspace --all-features
 cargo doc --workspace --no-deps
 ~~~
 
-The CLI is available from the workspace while Ember is unpublished:
+The CLI is available from this workspace:
 
 ~~~bash
 cargo run -p ember-cli -- new my-app
@@ -380,7 +468,7 @@ logging.backtrace=off
 ~~~
 
 Set `EMBER_PROFILE=test` to activate the matching YAML, YML, and properties
-profile files. For example, `EMBER_SERVER_PORT=9000 cargo run -p hello-world`
+profile files. For example, `EMBER_SERVER_PORT=9000 cargo run`
 changes the listening port without changing source code. `RUST_LOG` remains an
 explicit advanced tracing-filter override; invalid directives fall back to the
 typed `logging.level` without echoing the directive.
@@ -400,16 +488,15 @@ typed `logging.level` without echoing the directive.
   'build.rs'.
 * 'ember-cli' provides 'new', 'dev', and 'check'.
 
-See [docs/architecture.md](docs/architecture.md) for the dependency graph,
-trade-offs, risks, roadmap, and the multi-agent review contract. Generated
-behavior is described in [docs/generated-code.md](docs/generated-code.md).
+See [docs/architecture.md](docs/architecture.md) for the dependency graph and
+design boundaries. Generated behavior is described in
+[docs/generated-code.md](docs/generated-code.md).
 
 ## Security defaults
 
 The default listener binds to '127.0.0.1:8080', not all interfaces. Ember
 installs a 1 MiB default request body limit and request tracing without logging
-request bodies. Authentication, secrets management, database adapters, and
-exporters are deliberately outside this MVP.
+request bodies.
 
 ## License
 
