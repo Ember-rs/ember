@@ -63,6 +63,55 @@ pretending that the framework is finished; the roadmap treats the current HTTP
 slice as the foundation for broader web application, API, monolith, and
 microservice support.
 
+## Why Rust developers choose Ember
+
+Ember is intended to feel like Rust, not like a foreign runtime dropped on top
+of Rust. The framework favors explicit types, normal Cargo projects, compiler
+errors, and libraries from the standard Rust web ecosystem.
+
+- **No hidden runtime magic.** Component discovery and route registration are
+  generated at build time. There is no runtime filesystem scan, reflection
+  layer, or string-based dependency container to debug in production.
+- **Generated code stays inspectable.** Ember's CLI writes ordinary Rust source
+  files and a normal `build.rs`. When something goes wrong, developers can read
+  the generated project, follow the compiler diagnostics, and take ownership of
+  the code.
+- **Use the ecosystem you already know.** Ember exposes Axum, Tower, Serde,
+  Tokio, and `tracing` at the application boundary. Existing middleware,
+  extractors, serializers, test tools, and libraries remain useful.
+- **Abstractions without giving up control.** The standard runner provides
+  sensible application startup and shutdown, while `build_router()` and the
+  lower-level re-exports make it possible to customize the HTTP boundary.
+- **Adopt it incrementally.** Start with one service or generated application,
+  keep direct Rust code where it is clearer, and introduce Ember conventions
+  only where they reduce repetition.
+- **Designed for performance-sensitive services.** Ember builds on async Rust
+  and Axum rather than introducing a separate execution model. The framework's
+  goal is to organize application code without turning the hot path into a
+  dynamic object graph.
+
+## Why contribute to Ember?
+
+Ember is also a place to improve the Rust web development experience itself.
+Contributors can work on focused crates instead of one large runtime: macros,
+configuration, lifecycle management, routing, security, scheduling, the CLI,
+or the project generator can evolve independently behind clear boundaries.
+
+The project is a good fit for Rust developers who want to:
+
+- shape practical conventions for production Rust applications;
+- improve compile-time APIs, diagnostics, and generated-code ergonomics;
+- build reusable tooling for Axum and the wider async Rust ecosystem;
+- contribute examples, tests, documentation, or starter templates; and
+- help decide which framework features belong in Ember — and which should stay
+  in existing ecosystem crates.
+
+The current MVP keeps the scope deliberately understandable. New contributors
+can run the workspace checks, inspect a focused crate, add a test or example,
+and discuss a concrete improvement without needing to learn a large runtime
+first. See the [documentation index](docs/README.md) and the [architecture
+guide](docs/architecture.md) before opening a design-heavy change.
+
 The product rule for Ember is broader than this first slice: Ember should
 provide the default application infrastructure developers need for web
 applications, APIs, monoliths, and microservices out of the box. The roadmap
