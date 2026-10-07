@@ -11,7 +11,7 @@ use crate::{
     cli::{ApplicationKind, Cli, CommandKind},
     filesystem::{
         escape_toml_basic_string, local_dependency, manifest_path, normalize_package_name,
-        package_name, reserve_destination,
+        package_name,
     },
     generator::create_project,
     templates::STANDARD_DIRECTORIES,
@@ -179,22 +179,6 @@ fn refuses_to_overwrite_existing_destination() {
         .to_string()
         .contains("refusing to overwrite existing path"));
     fs::remove_dir_all(path).unwrap();
-}
-
-#[test]
-fn reserves_destination_root_exclusively_after_preflight() {
-    let root = test_directory("exclusive");
-    let destination = root.join("nested/project");
-
-    reserve_destination(&destination).unwrap();
-    assert!(destination.is_dir());
-
-    let error = reserve_destination(&destination).unwrap_err();
-    assert!(error
-        .to_string()
-        .contains("refusing to overwrite existing path"));
-
-    fs::remove_dir_all(root).unwrap();
 }
 
 fn test_directory(name: &str) -> PathBuf {

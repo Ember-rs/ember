@@ -8,26 +8,6 @@ use std::{
 
 use anyhow::{bail, Context, Result};
 
-pub(crate) fn reserve_destination(path: &Path) -> Result<()> {
-    if let Some(parent) = path
-        .parent()
-        .filter(|parent| !parent.as_os_str().is_empty())
-    {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("could not create destination parent {}", parent.display()))?;
-    }
-
-    match fs::create_dir(path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-            bail!("refusing to overwrite existing path {}", path.display())
-        }
-        Err(error) => {
-            Err(error).with_context(|| format!("could not create destination {}", path.display()))
-        }
-    }
-}
-
 pub(crate) fn ensure_destination_available(path: &Path) -> Result<()> {
     match fs::symlink_metadata(path) {
         Ok(_) => bail!("refusing to overwrite existing path {}", path.display()),
