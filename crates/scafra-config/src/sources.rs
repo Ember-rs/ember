@@ -137,7 +137,7 @@ impl ConfigLoader {
         T: DeserializeOwned + Serialize + Default,
     {
         let (merged, origins) = self.load_merged::<T>()?;
-        return serde_yaml::from_value(merged).map_err(|error| decode_error(error, &origins));
+        serde_yaml::from_value(merged).map_err(|error| decode_error(error, &origins))
     }
 
     pub fn load_properties<T>(&self) -> Result<T, ConfigError>
@@ -231,13 +231,11 @@ impl ConfigLoader {
 
         let active = ["scafra", "profiles", "active"]
             .into_iter()
-            .fold(Some(&base), |value, segment| {
-                value.and_then(|value| match value {
-                    serde_yaml::Value::Mapping(map) => {
-                        map.get(serde_yaml::Value::String(segment.to_owned()))
-                    }
-                    _ => None,
-                })
+            .try_fold(&base, |value, segment| match value {
+                serde_yaml::Value::Mapping(map) => {
+                    map.get(serde_yaml::Value::String(segment.to_owned()))
+                }
+                _ => None,
             })
             .and_then(serde_yaml::Value::as_str)
             .map(str::to_owned);

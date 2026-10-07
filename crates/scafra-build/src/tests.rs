@@ -1101,27 +1101,28 @@ fn opt_in_discovery_preserves_direct_outputs_and_commits_extension_artifacts() {
     let direct_graph = outputs.path("direct-graph");
     let opt_in_modules = outputs.path("opt-in-modules");
     let opt_in_graph = outputs.path("opt-in-graph");
+    let source_root = outputs.path("source");
     for path in [
         &direct_modules,
         &direct_graph,
         &opt_in_modules,
         &opt_in_graph,
+        &source_root,
     ] {
         std::fs::create_dir_all(path).unwrap();
     }
+    std::fs::write(source_root.join("main.rs"), "fn main() {}\n").unwrap();
 
     let environment = BuildEnvironment::new(&direct_modules);
-    let source_root = "../../examples/typed-graph/src";
-
-    discover(source_root).unwrap();
+    discover(&source_root).unwrap();
     let direct_modules_source = std::fs::read(direct_modules.join(GENERATED_MODULES_PATH)).unwrap();
 
     environment.set_out_dir(&direct_graph);
-    discover_graph(source_root).unwrap();
+    discover_graph(&source_root).unwrap();
     let direct_graph_source = std::fs::read(direct_graph.join(GENERATED_MODULES_PATH)).unwrap();
 
     environment.set_out_dir(&opt_in_modules);
-    discover_with_extensions(source_root, Vec::new()).unwrap();
+    discover_with_extensions(&source_root, Vec::new()).unwrap();
     assert_eq!(
         std::fs::read(opt_in_modules.join(GENERATED_MODULES_PATH)).unwrap(),
         direct_modules_source
@@ -1140,7 +1141,7 @@ fn opt_in_discovery_preserves_direct_outputs_and_commits_extension_artifacts() {
         failure: None,
         output_path: Some("nested/extension.txt"),
     });
-    discover_with_extensions(source_root, vec![module_extension]).unwrap();
+    discover_with_extensions(&source_root, vec![module_extension]).unwrap();
     assert_eq!(
         std::fs::read(opt_in_modules.join(GENERATED_MODULES_PATH)).unwrap(),
         direct_modules_source
@@ -1151,7 +1152,7 @@ fn opt_in_discovery_preserves_direct_outputs_and_commits_extension_artifacts() {
     );
 
     environment.set_out_dir(&opt_in_graph);
-    discover_graph_with_extensions(source_root, Vec::new()).unwrap();
+    discover_graph_with_extensions(&source_root, Vec::new()).unwrap();
     assert_eq!(
         std::fs::read(opt_in_graph.join(GENERATED_MODULES_PATH)).unwrap(),
         direct_graph_source

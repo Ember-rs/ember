@@ -5,91 +5,48 @@
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember">
+      <package file="$PROJECT_DIR$/crates/scafra">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-actuator">
+      <package file="$PROJECT_DIR$/crates/scafra-actuator">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-bootui">
+      <package file="$PROJECT_DIR$/crates/scafra-bootui">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-build">
+      <package file="$PROJECT_DIR$/crates/scafra-build">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-cli">
+      <package file="$PROJECT_DIR$/crates/scafra-cli">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-config">
+      <package file="$PROJECT_DIR$/crates/scafra-config">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-core">
+      <package file="$PROJECT_DIR$/crates/scafra-core">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-foundation">
+      <package file="$PROJECT_DIR$/crates/scafra-foundation">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-macros">
+      <package file="$PROJECT_DIR$/crates/scafra-macros">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-scheduler">
+      <package file="$PROJECT_DIR$/crates/scafra-scheduler">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-security">
+      <package file="$PROJECT_DIR$/crates/scafra-security">
         <feature name="default" enabled="true" />
       </package>
-      <package file="$PROJECT_DIR$/crates/ember-web">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/ambiguous/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/ambiguous">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/cycle/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/cycle">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/duplicate/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/duplicate">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/missing/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/missing">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/qualified/Cargo.toml">
-      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/qualified">
+      <package file="$PROJECT_DIR$/crates/scafra-web">
         <feature name="default" enabled="true" />
       </package>
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="">
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="change name to Scafra">
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-actuator/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-actuator/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-bootui/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-bootui/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-build/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-build/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-cli/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-cli/src/filesystem.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/src/filesystem.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-cli/src/templates.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/src/templates.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-cli/tests/generated_projects.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/tests/generated_projects.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-config/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-config/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-core/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-core/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-foundation/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-foundation/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-macros/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-macros/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-scheduler/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-scheduler/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-security/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-security/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember-web/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-web/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/ember/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/architecture.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/getting-started.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting-started.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/scafra/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/crates/scafra/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,6 +84,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Cargo.build [ember].executor": "Run",
+    "Cargo.build.executor": "Run",
     "CidrDebugProfileConversion": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -146,7 +104,7 @@
       <command value="cargo build" />
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Cargo.build">
     <configuration name="build [ember]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="build" />
@@ -165,8 +123,26 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="build" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="build" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.build" />
         <item itemvalue="Cargo.build [ember]" />
       </list>
     </recent_temporary>
@@ -186,5 +162,10 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="f" />
+    <MESSAGE value="change name to Scafra" />
+    <option name="LAST_COMMIT_MESSAGE" value="change name to Scafra" />
   </component>
 </project>

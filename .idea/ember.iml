@@ -28,6 +28,26 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/ember-web/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/crates/ember/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/ember/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-actuator/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-bootui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-build/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-build/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-cli/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-cli/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-config/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-foundation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-foundation/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-macros/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-scheduler/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-scheduler/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-security/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-web/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra-web/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/scafra/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/ambiguous/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/cycle/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/duplicate/target" />

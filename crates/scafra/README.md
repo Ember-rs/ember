@@ -15,5 +15,5 @@ use scafra::prelude::*;
 
 Scafra is built on Axum, Tokio, Tower, Serde, and `tracing`. It provides typed
 component and route macros, configuration loading, application startup, and
-optional operational features. See the [repository README](https://github.com/Ember-rs/ember)
+optional operational features. See the [repository README](https://github.com/Scafra/Scafra)
 for examples, supported behavior, and current limitations.

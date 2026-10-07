@@ -1,7 +1,9 @@
 # Publishing releases
 
-This workspace publishes its packages to crates.io when a version tag such as
-`v0.1.0` is pushed.
+Pull requests and branch pushes run formatting, workspace checks, Clippy with
+warnings denied, and tests. Stable releases publish when a matching tag such
+as `v0.1.0` is pushed. Snapshots publish only when manually started from GitHub
+Actions.
 
 ## One-time setup
 
@@ -9,9 +11,35 @@ This workspace publishes its packages to crates.io when a version tag such as
 2. In the GitHub repository settings, add it as the Actions secret
    `CRATES_IO_TOKEN`.
 
-The workflow does not run on ordinary branch pushes. It checks that the tag
-matches `[workspace.package].version`, checks the workspace, verifies each
-package's file list, then publishes packages in dependency order.
+The first successful release claims the package names on crates.io. The names
+were checked during setup, but crates.io package names can be claimed by
+someone else before the first release; the publish job will fail clearly if
+that happens.
+
+Both publishing paths run formatting, workspace, Clippy, and test gates, then
+check package manifests and file lists before using the same crates.io token
+to publish in dependency order. Each publish verifies the crate after its
+dependencies are available. After each upload the workflow waits for crates.io's
+index to expose that exact version before moving on to dependents. The stable
+path verifies its tag against
+`[workspace.package].version`; the snapshot path applies its selected
+prerelease version only inside the runner, leaving the branch unchanged.
+
+## Snapshot releases
+
+In GitHub, open **Actions → Publish to crates.io → Run workflow** and enter a
+new prerelease version, for example `0.1.0-snapshot.1` or `0.1.0-alpha.1`.
+Use a different version for every snapshot because published crate versions
+cannot be reused. Users can try a snapshot with an explicit prerelease
+requirement:
+
+```toml
+[dependencies]
+scafra = "=0.1.0-snapshot.1"
+```
+
+Snapshots and stable releases share package names, but prerelease versions do
+not satisfy ordinary stable version requirements.
 
 ## Release steps
 
