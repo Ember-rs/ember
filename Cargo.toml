@@ -1,25 +1,25 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/ember",
-    "crates/ember-core",
-    "crates/ember-foundation",
-    "crates/ember-macros",
-    "crates/ember-actuator",
-    "crates/ember-scheduler",
-    "crates/ember-security",
-    "crates/ember-web",
-    "crates/ember-config",
-    "crates/ember-cli",
-    "crates/ember-build"
-    , "crates/ember-bootui"
+    "crates/scafra",
+    "crates/scafra-core",
+    "crates/scafra-foundation",
+    "crates/scafra-macros",
+    "crates/scafra-actuator",
+    "crates/scafra-scheduler",
+    "crates/scafra-security",
+    "crates/scafra-web",
+    "crates/scafra-config",
+    "crates/scafra-cli",
+    "crates/scafra-build",
+    "crates/scafra-bootui",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/ember-rs/ember"
+repository = "https://github.com/Ember-rs/ember"
 rust-version = "1.82"
 
 [workspace.dependencies]
@@ -30,17 +30,17 @@ jsonwebtoken = "9"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde_json = "1"
 clap = { version = "4.5", features = ["derive"] }
-ember = { path = "crates/ember" }
-ember-build = { path = "crates/ember-build" }
-ember-bootui = { path = "crates/ember-bootui" }
-ember-config = { path = "crates/ember-config" }
-ember-core = { path = "crates/ember-core" }
-ember-foundation = { path = "crates/ember-foundation" }
-ember-macros = { path = "crates/ember-macros" }
-ember-actuator = { path = "crates/ember-actuator" }
-ember-scheduler = { path = "crates/ember-scheduler" }
-ember-security = { path = "crates/ember-security" }
-ember-web = { path = "crates/ember-web" }
+scafra = { path = "crates/scafra", version = "0.1.0" }
+scafra-build = { path = "crates/scafra-build", version = "0.1.0" }
+scafra-bootui = { path = "crates/scafra-bootui", version = "0.1.0" }
+scafra-config = { path = "crates/scafra-config", version = "0.1.0" }
+scafra-core = { path = "crates/scafra-core", version = "0.1.0" }
+scafra-foundation = { path = "crates/scafra-foundation", version = "0.1.0" }
+scafra-macros = { path = "crates/scafra-macros", version = "0.1.0" }
+scafra-actuator = { path = "crates/scafra-actuator", version = "0.1.0" }
+scafra-scheduler = { path = "crates/scafra-scheduler", version = "0.1.0" }
+scafra-security = { path = "crates/scafra-security", version = "0.1.0" }
+scafra-web = { path = "crates/scafra-web", version = "0.1.0" }
 http = "1"
 inventory = "0.3"
 proc-macro2 = "1"

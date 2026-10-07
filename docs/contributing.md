@@ -1,6 +1,6 @@
 # Contributing
 
-Ember is a modular Rust workspace. Contributions are welcome in code,
+Scafra is a modular Rust workspace. Contributions are welcome in code,
 documentation, tests, examples, diagnostics, and generated starter templates.
 
 ## Before opening a change
@@ -28,8 +28,8 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 ```
 
-For CLI or generated-project changes, also run the relevant `ember new`,
-`ember check`, or generated-project integration tests.
+For CLI or generated-project changes, also run the relevant `scafra new`,
+`scafra check`, or generated-project integration tests.
 
 ## Contribution principles
 

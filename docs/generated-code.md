@@ -1,6 +1,6 @@
 # Generated projects
 
-The `ember new` command creates ordinary, inspectable Rust files. It does not
+The `scafra new` command creates ordinary, inspectable Rust files. It does not
 generate a hidden application bundle or require a special editor.
 
 ## Typical layout
@@ -28,13 +28,13 @@ The monolith starter additionally creates a bounded module under
 
 ## Source discovery
 
-The generated `#[ember::main]` macro discovers Rust files below `src/main/`
+The generated `#[scafra::main]` macro discovers Rust files below `src/main/`
 during compilation and emits the module declarations needed by the application.
 New Rust files under `src/main/` can therefore participate without manually
 adding every `mod` declaration to `main.rs`.
 
 Applications that opt into the typed dependency graph can add an application-
-owned `build.rs` and call `ember_build::discover_graph("src/main")`. That is a
+owned `build.rs` and call `scafra_build::discover_graph("src/main")`. That is a
 separate path from the default starter.
 
 The generated files remain normal Rust code. Visibility, imports, compiler
@@ -46,15 +46,15 @@ diagnostics, and application ownership are still explicit.
 sequenceDiagram
     participant Dev as Developer
     participant Cargo
-    participant Ember as Ember macros
+    participant Scafra as Scafra macros
     participant App as Application
     participant Server as Axum/Tokio
 
     Dev->>Cargo: cargo run
-    Cargo->>Ember: Expand #[ember::main]
-    Ember->>Ember: Discover src/main/
-    Cargo->>Ember: Expand typed components and routes
-    Ember-->>App: Compile modules and registrations
+    Cargo->>Scafra: Expand #[scafra::main]
+    Scafra->>Scafra: Discover src/main/
+    Cargo->>Scafra: Expand typed components and routes
+    Scafra-->>App: Compile modules and registrations
     App->>Server: Build router and start server
 ```
 

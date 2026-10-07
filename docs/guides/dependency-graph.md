@@ -1,12 +1,12 @@
 # Typed dependency graph
 
-Ember includes an opt-in build-time dependency graph for applications that
+Scafra includes an opt-in build-time dependency graph for applications that
 need explicit multi-file provider wiring. The graph is generated from typed
 Rust declarations and is intended to make dependency relationships visible
 before the application starts.
 
 The graph is currently an MVP and is not enabled by the starter templates. It
-does not inject values into controllers or replace `ember::run` automatically.
+does not inject values into controllers or replace `scafra::run` automatically.
 
 ## When to use it
 
@@ -22,5 +22,5 @@ usually enough.
 - the graph does not provide a runtime service locator;
 - application-owned startup and router composition remain explicit.
 
-See the implementation and tests in `crates/ember-build` for the current API
+See the implementation and tests in `crates/scafra-build` for the current API
 surface and supported graph shapes.

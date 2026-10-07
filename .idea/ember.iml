@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-actuator/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-bootui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/ambiguous/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/cycle/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/duplicate/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/missing/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/qualified/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-cli/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-cli/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-config/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-foundation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-foundation/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-macros/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-observation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-scheduler/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-scheduler/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-security/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-web/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember-web/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ember/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/ambiguous/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/cycle/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/duplicate/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/missing/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/ember-build/tests/fixtures/qualified/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

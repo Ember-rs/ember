@@ -1,0 +1,17 @@
+[package]
+name = "scafra-config"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Typed configuration primitives for Scafra applications"
+
+[dependencies]
+scafra-foundation.workspace = true
+scafra-actuator.workspace = true
+scafra-scheduler.workspace = true
+scafra-security.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
