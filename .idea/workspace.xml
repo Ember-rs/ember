@@ -44,9 +44,7 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="fix version error in file system">
-      <change beforePath="$PROJECT_DIR$/crates/scafra-web/tests/actuator.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/scafra-web/tests/actuator.rs" afterDir="false" />
-    </list>
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="fix version error in file system" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
