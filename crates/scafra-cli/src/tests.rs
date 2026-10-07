@@ -13,7 +13,7 @@ use crate::{
         escape_toml_basic_string, local_dependency, manifest_path, normalize_package_name,
         package_name,
     },
-    generator::create_project,
+    generator::{create_project, publish_staging_directory},
     templates::STANDARD_DIRECTORIES,
 };
 
@@ -179,6 +179,31 @@ fn refuses_to_overwrite_existing_destination() {
         .to_string()
         .contains("refusing to overwrite existing path"));
     fs::remove_dir_all(path).unwrap();
+}
+
+#[test]
+fn atomic_publish_preserves_destination_created_after_preflight() {
+    let root = test_directory("publish-race");
+    let staging = root.join("generated.scafra-tmp");
+    let destination = root.join("generated");
+    fs::create_dir_all(&staging).unwrap();
+    fs::write(staging.join("project.txt"), "generated project").unwrap();
+
+    crate::filesystem::ensure_destination_available(&destination).unwrap();
+    fs::create_dir(&destination).unwrap();
+    fs::write(destination.join("sentinel.txt"), "keep me").unwrap();
+
+    assert!(publish_staging_directory(&staging, &destination).is_err());
+    assert_eq!(
+        fs::read_to_string(destination.join("sentinel.txt")).unwrap(),
+        "keep me"
+    );
+    assert_eq!(
+        fs::read_to_string(staging.join("project.txt")).unwrap(),
+        "generated project"
+    );
+
+    fs::remove_dir_all(root).unwrap();
 }
 
 fn test_directory(name: &str) -> PathBuf {

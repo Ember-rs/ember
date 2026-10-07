@@ -382,8 +382,9 @@ Generation writes the complete project into a temporary sibling directory and
 moves it into place only after every file has been written. A filesystem error
 while staging removes that temporary directory and leaves the requested
 destination absent. The destination is checked again immediately before the
-move, and existing paths are never intentionally overwritten. The repository's
-focused CLI and non-listener integration checks cover this preflight and
+move, and the completed directory is published with an atomic no-replace move
+on Linux, macOS, and Windows, so a destination created concurrently is
+preserved. The repository's focused CLI and non-listener integration checks cover this preflight and
 compilation behavior. The live route/shutdown smoke remains a
 release-gate check in an environment that permits loopback listeners.
 

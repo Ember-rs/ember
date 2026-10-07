@@ -23,7 +23,7 @@ pub(crate) fn create_project(path: &Path, kind: ApplicationKind) -> Result<()> {
     populate_project(&staging.0, &files)?;
 
     ensure_destination_available(path)?;
-    fs::rename(&staging.0, path).with_context(|| {
+    publish_staging_directory(&staging.0, path).with_context(|| {
         format!(
             "could not move completed project from {} to {}",
             staging.0.display(),
@@ -37,6 +37,62 @@ pub(crate) fn create_project(path: &Path, kind: ApplicationKind) -> Result<()> {
         path.display()
     );
     Ok(())
+}
+
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_vendor = "apple",
+    target_os = "redox"
+))]
+pub(crate) fn publish_staging_directory(staging: &Path, destination: &Path) -> std::io::Result<()> {
+    rustix::fs::renameat_with(
+        rustix::fs::CWD,
+        staging,
+        rustix::fs::CWD,
+        destination,
+        rustix::fs::RenameFlags::NOREPLACE,
+    )
+    .map_err(std::io::Error::from)
+}
+
+#[cfg(windows)]
+pub(crate) fn publish_staging_directory(staging: &Path, destination: &Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::MoveFileW;
+
+    let staging: Vec<u16> = staging.as_os_str().encode_wide().chain(Some(0)).collect();
+    let destination: Vec<u16> = destination
+        .as_os_str()
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+
+    // MoveFileW fails if the destination already exists, and both paths are
+    // siblings so the directory move stays on the same volume.
+    let result = unsafe { MoveFileW(staging.as_ptr(), destination.as_ptr()) };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(any(
+    target_os = "linux",
+    target_os = "android",
+    target_vendor = "apple",
+    target_os = "redox",
+    windows
+)))]
+pub(crate) fn publish_staging_directory(
+    _staging: &Path,
+    _destination: &Path,
+) -> std::io::Result<()> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "atomic no-replace directory moves are unsupported on this platform",
+    ))
 }
 
 fn populate_project(path: &Path, files: &[(&'static str, String)]) -> Result<()> {
