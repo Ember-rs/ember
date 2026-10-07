@@ -123,7 +123,7 @@ fn cli_preserves_default_and_alias_and_normalizes_package_names() {
     run_cli(&["new", normalized_project.to_str().unwrap(), "--kind", "api"]);
     let manifest = fs::read_to_string(normalized_project.join("Cargo.toml")).unwrap();
     assert!(manifest.contains("name = \"_123_catalog\""));
-    assert!(manifest.contains("scafra = { package = \"scafra\", path ="));
+    assert!(manifest.contains("scafra = { path ="));
     assert!(!manifest.contains("scafra-build"));
 }
 
@@ -573,6 +573,7 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
     let child = Command::new(&executable)
         .current_dir(&project)
         .env("SCAFRA_SERVER_PORT", "not-a-port")
+        .env("SCAFRA_DEV_CHILD", "1")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()

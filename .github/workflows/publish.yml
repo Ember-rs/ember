@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      snapshot_version:
+        description: "Unique prerelease version, e.g. 0.1.0-snapshot.1"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -23,18 +29,44 @@ jobs:
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Verify release tag matches workspace version
+      - name: Select release or snapshot version
+        id: version
+        env:
+          SNAPSHOT_VERSION: ${{ inputs.snapshot_version }}
         shell: bash
         run: |
-          version=$(sed -n '/^\[workspace\.package\]/,/^\[/p' Cargo.toml | sed -n 's/^version = "\([^"]*\)"/\1/p' | head -n 1)
-          test -n "$version"
-          if [[ "$GITHUB_REF_NAME" != "v$version" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match workspace version v$version" >&2
-            exit 1
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            version="$SNAPSHOT_VERSION"
+            if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc|snapshot)(\.[0-9A-Za-z]+)*$ ]]; then
+              echo "Snapshot version must be a prerelease, e.g. 0.1.0-snapshot.1" >&2
+              exit 1
+            fi
+            base_version=$(sed -n '/^\[workspace\.package\]/,/^\[/p' Cargo.toml | sed -n 's/^version = "\([^"]*\)"/\1/p' | head -n 1)
+            if [[ -z "$base_version" ]]; then
+              echo "Could not read [workspace.package].version" >&2
+              exit 1
+            fi
+            sed -i "s|\"$base_version\"|\"$version\"|g" Cargo.toml
+          else
+            version=$(sed -n '/^\[workspace\.package\]/,/^\[/p' Cargo.toml | sed -n 's/^version = "\([^"]*\)"/\1/p' | head -n 1)
+            if [[ -z "$version" || "$GITHUB_REF_NAME" != "v$version" ]]; then
+              echo "Tag $GITHUB_REF_NAME does not match workspace version v$version" >&2
+              exit 1
+            fi
           fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Check workspace
-        run: cargo check --workspace --all-features --locked
+        run: cargo check --workspace --all-features
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace --all-features --locked
 
       - name: Verify crates can be packaged
         shell: bash
@@ -54,13 +86,13 @@ jobs:
             scafra
           )
           for package in "${packages[@]}"; do
-            cargo package --package "$package" --locked --list >/dev/null
+            cargo package --package "$package" --locked --allow-dirty --list >/dev/null
           done
 
       - name: Publish crates in dependency order
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
           test -n "$CARGO_REGISTRY_TOKEN" || {
@@ -82,11 +114,24 @@ jobs:
             scafra-cli
             scafra
           )
+          wait_for_index() {
+            local package="$1"
+            for attempt in {1..18}; do
+              if (cd "$RUNNER_TEMP" && cargo info --registry crates-io "$package@$RELEASE_VERSION" >/dev/null 2>&1); then
+                return 0
+              fi
+              echo "Waiting for $package $RELEASE_VERSION to appear in the crates.io index ($attempt/18)"
+              sleep 10
+            done
+            echo "$package $RELEASE_VERSION did not appear in the crates.io index in time" >&2
+            return 1
+          }
           for package in "${packages[@]}"; do
-            if (cd "$RUNNER_TEMP" && cargo info --registry crates-io "$package@${RELEASE_VERSION#v}" >/dev/null 2>&1); then
-              echo "$package ${RELEASE_VERSION#v} is already published; skipping"
+            if (cd "$RUNNER_TEMP" && cargo info --registry crates-io "$package@$RELEASE_VERSION" >/dev/null 2>&1); then
+              echo "$package $RELEASE_VERSION is already published; skipping"
               continue
             fi
             echo "Publishing $package"
-            cargo publish --package "$package" --locked
+            cargo publish --package "$package" --locked --allow-dirty
+            wait_for_index "$package"
           done
