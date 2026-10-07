@@ -44,9 +44,8 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="- CI-workflowet (.github/workflows/ci.yml) kører ved branch-push og pull request: formattering, workspace-check, Clippy med warnings som fejl og tests.&#10;- Publish-workflowet (.github/workflows/publish.yml) kører de samme kvalitetskontroller før publicering. Den udgiver crates i afhængighedsrækkefølge og venter på, at hver version kan ses i crates.io-indekset.&#10;- **Snapshots:** GitHub → Actions → _Publish to crates.io_ → _Run workflow_. Indtast en unik prerelease-version, fx `0.1.0-snapshot.1`, og vælg den branch, du vil teste. Versionsændringen sker kun i workflow-runneren.&#10;- **Stabil release:** Opdatér versionen i `Cargo.toml`, commit den, og push et matchende tag, fx `v0.1.0`.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/scafra-cli/src/filesystem.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/scafra-cli/src/filesystem.rs" afterDir="false" />
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="fix version error in file system">
+      <change beforePath="$PROJECT_DIR$/crates/scafra-web/tests/actuator.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/scafra-web/tests/actuator.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,6 +166,7 @@
     <MESSAGE value="f" />
     <MESSAGE value="change name to Scafra" />
     <MESSAGE value="- CI-workflowet (.github/workflows/ci.yml) kører ved branch-push og pull request: formattering, workspace-check, Clippy med warnings som fejl og tests.&#10;- Publish-workflowet (.github/workflows/publish.yml) kører de samme kvalitetskontroller før publicering. Den udgiver crates i afhængighedsrækkefølge og venter på, at hver version kan ses i crates.io-indekset.&#10;- **Snapshots:** GitHub → Actions → _Publish to crates.io_ → _Run workflow_. Indtast en unik prerelease-version, fx `0.1.0-snapshot.1`, og vælg den branch, du vil teste. Versionsændringen sker kun i workflow-runneren.&#10;- **Stabil release:** Opdatér versionen i `Cargo.toml`, commit den, og push et matchende tag, fx `v0.1.0`." />
-    <option name="LAST_COMMIT_MESSAGE" value="- CI-workflowet (.github/workflows/ci.yml) kører ved branch-push og pull request: formattering, workspace-check, Clippy med warnings som fejl og tests.&#10;- Publish-workflowet (.github/workflows/publish.yml) kører de samme kvalitetskontroller før publicering. Den udgiver crates i afhængighedsrækkefølge og venter på, at hver version kan ses i crates.io-indekset.&#10;- **Snapshots:** GitHub → Actions → _Publish to crates.io_ → _Run workflow_. Indtast en unik prerelease-version, fx `0.1.0-snapshot.1`, og vælg den branch, du vil teste. Versionsændringen sker kun i workflow-runneren.&#10;- **Stabil release:** Opdatér versionen i `Cargo.toml`, commit den, og push et matchende tag, fx `v0.1.0`." />
+    <MESSAGE value="fix version error in file system" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix version error in file system" />
   </component>
 </project>
