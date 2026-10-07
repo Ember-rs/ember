@@ -4,6 +4,7 @@ use std::{
     pin::Pin,
     sync::{Arc, Mutex},
     task::{Context, Poll},
+    time::Duration,
 };
 
 use scafra_foundation::{
@@ -172,6 +173,7 @@ pub async fn serve_on_with_policy(
         policy,
         scafra_actuator::ActuatorConfig::default(),
         scafra_security::SecurityConfig::default(),
+        None,
     )
     .await
 }
@@ -192,6 +194,7 @@ where
         policy,
         scafra_actuator::ActuatorConfig::default(),
         scafra_security::SecurityConfig::default(),
+        None,
     )
     .await
 }
@@ -218,7 +221,30 @@ pub async fn serve_on_with_policy_and_actuator_and_security(
     actuator: scafra_actuator::ActuatorConfig,
     security: scafra_security::SecurityConfig,
 ) -> Result<ServerOutcome, ServerError> {
-    serve_on_with_signal(address, shutdown_signal(), policy, actuator, security).await
+    serve_on_with_policy_and_actuator_and_security_and_request_timeout(
+        address, policy, actuator, security, None,
+    )
+    .await
+}
+
+/// Serves the registered application with an optional request-processing
+/// deadline, actuator and security configuration.
+pub async fn serve_on_with_policy_and_actuator_and_security_and_request_timeout(
+    address: SocketAddr,
+    policy: ShutdownPolicy,
+    actuator: scafra_actuator::ActuatorConfig,
+    security: scafra_security::SecurityConfig,
+    request_timeout: Option<Duration>,
+) -> Result<ServerOutcome, ServerError> {
+    serve_on_with_signal(
+        address,
+        shutdown_signal(),
+        policy,
+        actuator,
+        security,
+        request_timeout,
+    )
+    .await
 }
 
 async fn serve_on_with_signal<F>(
@@ -227,6 +253,7 @@ async fn serve_on_with_signal<F>(
     policy: ShutdownPolicy,
     actuator: scafra_actuator::ActuatorConfig,
     security: scafra_security::SecurityConfig,
+    request_timeout: Option<Duration>,
 ) -> Result<ServerOutcome, ServerError>
 where
     F: Future<Output = Result<ShutdownReason, WebError>> + Send + 'static,
@@ -237,7 +264,7 @@ where
         security = security.enabled,
         "web configuration initialized"
     );
-    let router = crate::routing::build_router_with_actuator_and_security(&actuator, &security)
+    let router = crate::routing::build_router_with_timeout(&actuator, &security, request_timeout)
         .map_err(ServerError::from)?;
     scafra_foundation::startup!("application routes built");
     let listener = TcpListener::bind(address)

@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::time::Duration;
 
-use axum::{extract::DefaultBodyLimit, Router};
-use tower_http::trace::TraceLayer;
+use axum::{extract::DefaultBodyLimit, http::StatusCode, Router};
+use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 
 use crate::{errors::WebError, registration::ControllerRegistration};
 use scafra_actuator::ActuatorConfig;
@@ -33,6 +34,14 @@ pub fn build_router_with_actuator_and_security(
     actuator: &ActuatorConfig,
     security: &scafra_security::SecurityConfig,
 ) -> Result<Router, WebError> {
+    build_router_with_timeout(actuator, security, None)
+}
+
+pub(crate) fn build_router_with_timeout(
+    actuator: &ActuatorConfig,
+    security: &scafra_security::SecurityConfig,
+    request_timeout: Option<Duration>,
+) -> Result<Router, WebError> {
     let mut seen = HashMap::<(String, String), &'static str>::new();
     for (method, path) in scafra_actuator::reserved_routes(actuator) {
         seen.insert(
@@ -61,16 +70,27 @@ pub fn build_router_with_actuator_and_security(
         .fold(scafra_actuator::router(actuator), |router, registration| {
             (registration.register)(router)
         })
-        .layer(DefaultBodyLimit::max(1024 * 1024))
-        .layer(
-            TraceLayer::new_for_http().make_span_with(|request: &axum::http::Request<_>| {
-                tracing::debug_span!(
-                    "request",
-                    method = %request.method(),
-                    version = ?request.version(),
-                )
-            }),
-        );
+        .layer(DefaultBodyLimit::max(1024 * 1024));
 
-    Ok(scafra_security::layer(router, security.clone()))
+    let router = scafra_security::layer(router, security.clone());
+    let router = with_request_timeout(router, request_timeout);
+    Ok(router.layer(TraceLayer::new_for_http().make_span_with(
+        |request: &axum::http::Request<_>| {
+            tracing::debug_span!(
+                "request",
+                method = %request.method(),
+                version = ?request.version(),
+            )
+        },
+    )))
+}
+
+pub(crate) fn with_request_timeout(router: Router, request_timeout: Option<Duration>) -> Router {
+    match request_timeout {
+        Some(timeout) => router.layer(TimeoutLayer::with_status_code(
+            StatusCode::GATEWAY_TIMEOUT,
+            timeout,
+        )),
+        None => router,
+    }
 }

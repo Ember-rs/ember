@@ -453,6 +453,8 @@ explicit loader overrides:
 server:
   host: 127.0.0.1
   port: 8080
+  # Optional; unset keeps the historical unlimited processing time.
+  timeout: 30 # optional request-processing deadline in seconds
 logging:
   level: info
   backtrace: off
@@ -463,6 +465,7 @@ The equivalent focused properties form is:
 ~~~properties
 server.host=127.0.0.1
 server.port=8080
+server.timeout=30
 logging.level=info
 logging.backtrace=off
 ~~~
@@ -472,6 +475,19 @@ profile files. For example, `SCAFRA_SERVER_PORT=9000 cargo run`
 changes the listening port without changing source code. `RUST_LOG` remains an
 explicit advanced tracing-filter override; invalid directives fall back to the
 typed `logging.level` without echoing the directive.
+
+`server.timeout` (also `SCAFRA_SERVER_TIMEOUT`) sets an optional
+request-processing deadline in seconds. It must be greater than zero
+when set. When the deadline expires, Scafra cancels the in-flight request
+future and returns `504 Gateway Timeout` with an empty body. The deadline
+covers security middleware, request body extraction, and handler processing
+until the response is created. It does not cover establishing a connection or
+receiving request headers, and it ends when the handler returns the response;
+streaming response bodies can continue afterward. Cancellation does not undo
+external side effects the handler already performed. An unset value preserves
+the existing no-deadline behavior. Scafra uses 504 to identify this server-side
+processing deadline; 408 describes the server waiting for the client to finish
+sending its request.
 
 ## Crates
 

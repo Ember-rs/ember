@@ -87,6 +87,60 @@ fn application_configuration_selects_the_active_profile() {
 }
 
 #[test]
+fn request_timeout_loads_with_precedence_and_is_validated() {
+    let root =
+        std::env::temp_dir().join(format!("scafra-timeout-config-test-{}", std::process::id()));
+    fs::create_dir_all(&root).unwrap();
+    fs::write(root.join("application.yaml"), "server:\n  timeout: 12\n").unwrap();
+
+    let env_prefix = format!("SCAFRA_TIMEOUT_TEST_{}", std::process::id());
+    let env_key = format!("{env_prefix}_SERVER_TIMEOUT");
+    std::env::set_var(&env_key, "24");
+    let from_environment = ConfigLoader::new()
+        .root(&root)
+        .env_prefix(&env_prefix)
+        .load_validated::<ScafraConfig>()
+        .unwrap();
+    assert_eq!(from_environment.server.request_timeout_seconds, Some(24));
+
+    let config = ConfigLoader::new()
+        .root(&root)
+        .env_prefix(&env_prefix)
+        .override_value("server.timeout", "37")
+        .load_validated::<ScafraConfig>()
+        .unwrap();
+    assert_eq!(config.server.request_timeout_seconds, Some(37));
+    std::env::remove_var(env_key);
+
+    let invalid = ConfigLoader::new()
+        .root(&root)
+        .env_prefix(format!(
+            "SCAFRA_TIMEOUT_TEST_INVALID_{}",
+            std::process::id()
+        ))
+        .override_value("server.timeout", "0")
+        .load_validated::<ScafraConfig>()
+        .expect_err("zero seconds cannot create a useful request deadline");
+    assert!(matches!(invalid, ConfigError::Validation(_)));
+
+    let invalid_model = ScafraConfig {
+        server: ServerConfig {
+            request_timeout_seconds: Some(0),
+            ..ServerConfig::default()
+        },
+        ..ScafraConfig::default()
+    };
+    assert_eq!(
+        invalid_model.validate().unwrap_err().field,
+        "server.request_timeout_seconds"
+    );
+
+    let default = ScafraConfig::default();
+    assert_eq!(default.server.request_timeout_seconds, None);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn configuration_precedence_is_defaults_yaml_profile_environment_then_override() {
     let root = unique_temp_dir();
     fs::create_dir_all(&root).unwrap();

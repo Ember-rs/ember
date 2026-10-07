@@ -31,8 +31,8 @@ pub use scafra_security::{BasicAuthConfig, JwtConfig, SecurityConfig};
 pub use server::{
     run, run_on, run_on_with_log_level, serve_on, serve_on_with_actuator, serve_on_with_policy,
     serve_on_with_policy_and_actuator, serve_on_with_policy_and_actuator_and_security,
-    serve_on_with_shutdown, shutdown_channel, ServerOutcome, ShutdownFuture, ShutdownHandle,
-    ShutdownRequestError,
+    serve_on_with_policy_and_actuator_and_security_and_request_timeout, serve_on_with_shutdown,
+    shutdown_channel, ServerOutcome, ShutdownFuture, ShutdownHandle, ShutdownRequestError,
 };
 
 #[cfg(test)]
