@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-actuator">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-bootui">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-build">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-cli">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-config">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-core">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-foundation">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-macros">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-scheduler">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-security">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/ember-web">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/ambiguous/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/ambiguous">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/cycle/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/cycle">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/duplicate/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/duplicate">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/missing/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/missing">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+    <cargoProject FILE="$PROJECT_DIR$/crates/ember-build/tests/fixtures/qualified/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/ember-build/tests/fixtures/qualified">
+        <feature name="default" enabled="true" />
+      </package>
+    </cargoProject>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-actuator/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-actuator/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-bootui/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-bootui/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-build/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-build/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-cli/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-cli/src/filesystem.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/src/filesystem.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-cli/src/templates.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/src/templates.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-cli/tests/generated_projects.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-cli/tests/generated_projects.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-config/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-config/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-core/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-core/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-foundation/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-foundation/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-macros/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-macros/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-scheduler/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-scheduler/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-security/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-security/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember-web/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember-web/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/ember/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/ember/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/architecture.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/getting-started.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting-started.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "svp-bimo"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Ember-rs/ember.git",
+    "accountId": "619e321f-11f0-4faf-9b83-79fd0d9f2d91"
+  }
+}]]></component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="Mi9WarHK" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4,
+  "fromUser": false
+}]]></component>
+  <component name="ProjectId" id="3KKgk32xAtGIizRHsbqibcyUn8T" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Cargo.build [ember].executor": "Run",
+    "CidrDebugProfileConversion": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "feature/init-startup",
+    "last_opened_file_path": "/home/steffenp/workspace/ember-rs/ember-test-services",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
+    "org.rust.first.attach.projects": "true"
+  }
+}]]></component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="cargo build" />
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="build [ember]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="buildProfileId" value="dev" />
+      <option name="command" value="build" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo.build [ember]" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="/usr/bin" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="" />
+      <created>1791311813485</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791311813485</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

@@ -12,7 +12,7 @@ The CLI is currently run from this workspace.
 From the Ember workspace:
 
 ```bash
-cargo run -p ember-cli -- new hello-ember
+cargo run -p ember-framework-cli -- new hello-ember
 cd hello-ember
 cargo check
 cargo run
@@ -21,9 +21,9 @@ cargo run
 The default starter is a web application. Other supported shapes are:
 
 ```bash
-cargo run -p ember-cli -- new hello-api --kind api
-cargo run -p ember-cli -- new hello-service --kind service
-cargo run -p ember-cli -- new hello-monolith --kind monolith
+cargo run -p ember-framework-cli -- new hello-api --kind api
+cargo run -p ember-framework-cli -- new hello-service --kind service
+cargo run -p ember-framework-cli -- new hello-monolith --kind monolith
 ```
 
 The generated server listens on `127.0.0.1:8080` by default. Configuration can

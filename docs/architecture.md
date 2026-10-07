@@ -33,25 +33,27 @@ flowchart TD
 
 ## Workspace boundaries
 
-The workspace is split into focused crates. Framework-neutral types live in
-`ember-core` and `ember-foundation`; HTTP concerns live in `ember-web`;
-configuration is handled by `ember-config`; and project conventions are
-implemented by `ember-build` and `ember-cli`.
+The workspace is split into focused packages. Their published names start
+with `ember-framework-`; dependency aliases retain the shorter crate names
+used in Rust source. Framework-neutral types live in the core and foundation
+packages; HTTP concerns live in the web package; configuration is handled by
+the config package; project conventions are implemented by the build and CLI
+packages.
 
 This separation keeps the application facade convenient while allowing lower
 layers to remain reusable and testable.
 
 ```mermaid
 flowchart LR
-    CLI[ember-cli] --> BUILD[ember-build]
-    BUILD --> MACROS[ember-macros]
-    MACROS --> CORE[ember-core]
-    CONFIG[ember-config] --> FACADE[ember]
-    WEB[ember-web] --> FACADE
-    FOUNDATION[ember-foundation] --> WEB
+    CLI[ember-framework-cli] --> BUILD[ember-framework-build]
+    BUILD --> MACROS[ember-framework-macros]
+    MACROS --> CORE[ember-framework-core]
+    CONFIG[ember-framework-config] --> FACADE[ember-framework]
+    WEB[ember-framework-web] --> FACADE
+    FOUNDATION[ember-framework-foundation] --> WEB
     CORE --> FACADE
     MACROS --> FACADE
-    FACADE --> APP[Application]
+    FACADE --> APP[Application imports as ember]
 ```
 
 ## Compile-time composition

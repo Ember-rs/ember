@@ -1,5 +1,5 @@
 [package]
-name = "ember-macros"
+name = "ember-framework-macros"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

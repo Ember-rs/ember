@@ -1,5 +1,5 @@
 [package]
-name = "ember-scheduler"
+name = "ember-framework-scheduler"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -123,7 +123,7 @@ fn cli_preserves_default_and_alias_and_normalizes_package_names() {
     run_cli(&["new", normalized_project.to_str().unwrap(), "--kind", "api"]);
     let manifest = fs::read_to_string(normalized_project.join("Cargo.toml")).unwrap();
     assert!(manifest.contains("name = \"_123_catalog\""));
-    assert!(manifest.contains("ember = { path ="));
+    assert!(manifest.contains("ember = { package = \"ember-framework\", path ="));
     assert!(!manifest.contains("ember-build"));
 }
 

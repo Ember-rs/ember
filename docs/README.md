@@ -14,6 +14,7 @@ Axum, Tokio, Tower, Serde, and `tracing`.
   source discovery works.
 - [Dependency graph guide](guides/dependency-graph.md) — use the opt-in typed
   build-time graph.
+- [Publishing](publishing.md) — configure and trigger a crates.io release.
 - [Contributing](contributing.md) — build the workspace and make a focused
   contribution.
 
@@ -41,14 +42,18 @@ limitations where they affect how an application is built.
 | Crate | Responsibility |
 | --- | --- |
 | `ember` | Application-facing facade and prelude |
-| `ember-core` | Framework-neutral lifecycle and metadata types |
-| `ember-foundation` | Logging, backtraces, phases, and shutdown policy |
-| `ember-macros` | Procedural macros for components and routes |
-| `ember-web` | Axum integration, routing, limits, and shutdown |
-| `ember-config` | YAML, YML, properties, profiles, and environment overrides |
-| `ember-build` | Build-time module and dependency-graph discovery |
-| `ember-cli` | Project generation, development, and checks |
-| `ember-actuator` | Optional health, readiness, info, and metrics endpoints |
-| `ember-security` | Optional bearer, Basic, and JWT authentication |
-| `ember-scheduler` | Optional scheduled task support |
-| `ember-bootui` | Optional local development dashboard |
+| `ember-framework` | Application-facing facade; imported as `ember` |
+| `ember-framework-core` | Framework-neutral lifecycle and metadata types |
+| `ember-framework-foundation` | Logging, backtraces, phases, and shutdown policy |
+| `ember-framework-macros` | Procedural macros for components and routes |
+| `ember-framework-web` | Axum integration, routing, limits, and shutdown |
+| `ember-framework-config` | YAML, YML, properties, profiles, and environment overrides |
+| `ember-framework-build` | Build-time module and dependency-graph discovery |
+| `ember-framework-cli` | Project generation, development, and checks; installs `ember` |
+| `ember-framework-actuator` | Optional health, readiness, info, and metrics endpoints |
+| `ember-framework-security` | Optional bearer, Basic, and JWT authentication |
+| `ember-framework-scheduler` | Optional scheduled task support |
+| `ember-framework-bootui` | Optional local development dashboard |
+
+The `ember-framework` facade can be used from application code under the
+dependency key `ember`, so imports remain `use ember::prelude::*`.

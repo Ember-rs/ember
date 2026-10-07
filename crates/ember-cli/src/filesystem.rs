@@ -83,7 +83,13 @@ pub(crate) fn local_dependency(project: &Path, package: &str) -> Result<Option<S
     })?;
     let relative = relative_path(&project, &local_crate)?;
     let relative = manifest_path(&relative)?;
-    Ok(Some(format!("{package} = {{ path = \"{relative}\" }}")))
+    let published_package = match package {
+        "ember" => "ember-framework",
+        other => other,
+    };
+    Ok(Some(format!(
+        "{package} = {{ package = \"{published_package}\", path = \"{relative}\", version = \"0.1.0\" }}"
+    )))
 }
 
 fn absolute_path(path: &Path) -> Result<PathBuf> {

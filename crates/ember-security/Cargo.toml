@@ -1,5 +1,5 @@
 [package]
-name = "ember-security"
+name = "ember-framework-security"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

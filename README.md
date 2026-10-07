@@ -113,7 +113,7 @@ guide](docs/architecture.md) before opening a design-heavy change.
 ## Quick start from this workspace
 
 ~~~bash
-cargo run -p ember-cli -- new hello-world
+cargo run -p ember-framework-cli -- new hello-world
 cd hello-world
 cargo run
 # In another terminal:
@@ -168,11 +168,11 @@ multi-file provider wiring can opt into the build-time typed graph with
 From this checkout, create a starter with `ember new`:
 
 ~~~bash
-cargo run -p ember-cli -- new storefront
-cargo run -p ember-cli -- new billing-api --kind api
-cargo run -p ember-cli -- new catalog --kind service
-cargo run -p ember-cli -- new admin --kind web
-cargo run -p ember-cli -- new backoffice --kind monolith
+cargo run -p ember-framework-cli -- new storefront
+cargo run -p ember-framework-cli -- new billing-api --kind api
+cargo run -p ember-framework-cli -- new catalog --kind service
+cargo run -p ember-framework-cli -- new admin --kind web
+cargo run -p ember-framework-cli -- new backoffice --kind monolith
 ~~~
 
 Omitting `--kind` defaults to `web`. The canonical values are `web`, `api`,
@@ -271,7 +271,7 @@ impl OrderService {
 with the service type and function name; arguments and `self` are excluded by
 default so logging does not accidentally require `Debug` or expose values.
 
-The optional `ember-bootui` dependency uses this configuration. It is disabled
+The optional `ember-framework-bootui` dependency uses this configuration. It is disabled
 and local-only by default:
 
 ~~~yaml
@@ -425,9 +425,9 @@ cargo doc --workspace --no-deps
 The CLI is available from this workspace:
 
 ~~~bash
-cargo run -p ember-cli -- new my-app
-cargo run -p ember-cli -- check
-cargo run -p ember-cli -- dev
+cargo run -p ember-framework-cli -- new my-app
+cargo run -p ember-framework-cli -- check
+cargo run -p ember-framework-cli -- dev
 ~~~
 
 `ember dev` is the development watcher. Run it once from the application
@@ -475,18 +475,28 @@ typed `logging.level` without echoing the directive.
 
 ## Crates
 
-* 'ember' is the facade used by application developers.
-* 'ember-core' contains framework-neutral lifecycle and metadata types.
-* 'ember-foundation' contains the framework-neutral typed logging and backtrace
+* 'ember-framework' is the published facade package, with Rust library name
+  `ember` and dependency alias `ember` for application developers.
+* 'ember-framework-core' contains framework-neutral lifecycle and metadata types.
+* 'ember-framework-foundation' contains the framework-neutral typed logging and backtrace
   policy used by runtime consumers; it depends on no Ember crate.
-* 'ember-macros' contains the procedural macros and compile-failure tests.
-* 'ember-web' owns Axum, Tokio, Tower, route registration, and graceful
+* 'ember-framework-macros' contains the procedural macros and compile-failure tests.
+* 'ember-framework-web' owns Axum, Tokio, Tower, route registration, and graceful
   shutdown while consuming foundation logging.
-* 'ember-config' provides typed YAML/YML/properties loading with profile,
+* 'ember-framework-config' provides typed YAML/YML/properties loading with profile,
   environment, and explicit override precedence.
-* 'ember-build' generates the convention-based Rust module tree from
+* 'ember-framework-build' generates the convention-based Rust module tree from
   'build.rs'.
-* 'ember-cli' provides 'new', 'dev', and 'check'.
+* 'ember-framework-cli' provides 'new', 'dev', and 'check'; it installs the
+  `ember` executable.
+
+The crates.io package for the application facade is `ember-framework`; the
+dependency is aliased as `ember` so application code can keep using
+`use ember::prelude::*`. After publication, install the CLI with
+`cargo install ember-framework-cli`.
+
+See [docs/publishing.md](docs/publishing.md) for the GitHub Actions setup and
+release tag process.
 
 See [docs/architecture.md](docs/architecture.md) for the dependency graph and
 design boundaries. Generated behavior is described in

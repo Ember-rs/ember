@@ -23,8 +23,9 @@ pub(crate) fn template_files(
     package_name: &str,
     kind: ApplicationKind,
 ) -> Result<Vec<(&'static str, String)>> {
-    let ember_dependency =
-        local_dependency(project, "ember")?.unwrap_or_else(|| "ember = \"0.1\"".to_owned());
+    let ember_dependency = local_dependency(project, "ember")?.unwrap_or_else(|| {
+        "ember = { package = \"ember-framework\", version = \"0.1\" }".to_owned()
+    });
     let serde_dependency = if kind.needs_serde() {
         "serde = { version = \"1\", features = [\"derive\"] }\n"
     } else {

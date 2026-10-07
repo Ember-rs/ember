@@ -1,5 +1,5 @@
 [package]
-name = "ember-core"
+name = "ember-framework-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
