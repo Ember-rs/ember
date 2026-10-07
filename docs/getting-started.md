@@ -9,11 +9,11 @@ The CLI is currently run from this workspace.
 
 ## Generate an application
 
-From the Ember workspace:
+From the Scafra workspace:
 
 ```bash
-cargo run -p ember-framework-cli -- new hello-ember
-cd hello-ember
+cargo run -p scafra-cli -- new hello-scafra
+cd hello-scafra
 cargo check
 cargo run
 ```
@@ -21,9 +21,9 @@ cargo run
 The default starter is a web application. Other supported shapes are:
 
 ```bash
-cargo run -p ember-framework-cli -- new hello-api --kind api
-cargo run -p ember-framework-cli -- new hello-service --kind service
-cargo run -p ember-framework-cli -- new hello-monolith --kind monolith
+cargo run -p scafra-cli -- new hello-api --kind api
+cargo run -p scafra-cli -- new hello-service --kind service
+cargo run -p scafra-cli -- new hello-monolith --kind monolith
 ```
 
 The generated server listens on `127.0.0.1:8080` by default. Configuration can
@@ -32,7 +32,7 @@ be placed in `src/resources/application.yaml` or
 
 ## Run the checks
 
-From the Ember workspace:
+From the Scafra workspace:
 
 ```bash
 cargo fmt --all -- --check
@@ -42,12 +42,12 @@ cargo test --workspace --all-features
 
 ## Use the generated application
 
-Generated projects use the `ember` facade and typed component macros. A small
+Generated projects use the `scafra` facade and typed component macros. A small
 application can define a service and controller without a runtime service
 locator:
 
 ```rust
-use ember::prelude::*;
+use scafra::prelude::*;
 
 #[service]
 struct GreetingService;
@@ -65,7 +65,7 @@ impl GreetingController {
     }
 }
 
-#[ember::main]
+#[scafra::main]
 async fn main() {}
 ```
 

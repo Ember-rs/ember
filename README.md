@@ -1,19 +1,19 @@
-# Ember
+# Scafra
 
-Ember is an open-source, batteries-included web application framework for Rust.
+Scafra is an open-source, batteries-included web application framework for Rust.
 It gives Rust applications a clear structure for composition, configuration,
 startup, routing, logging, security, and operational endpoints while keeping
 the underlying Rust ecosystem visible and accessible.
 
-Ember is designed for teams that want the productive defaults commonly found
+Scafra is designed for teams that want the productive defaults commonly found
 in larger application frameworks without giving up Rust's compile-time safety,
 performance, or control. It builds on familiar technologies such as Axum,
 Tokio, Tower, Serde, and `tracing` instead of hiding them behind a proprietary
 runtime.
 
-## What is Ember?
+## What is Scafra?
 
-Ember provides the application infrastructure around a Rust web service. Its
+Scafra provides the application infrastructure around a Rust web service. Its
 facade crate and procedural macros let developers define typed services,
 controllers, routes, configuration, lifecycle hooks, and scheduled tasks in a
 consistent application model. The CLI can generate a ready-to-run project so
@@ -27,23 +27,23 @@ typed components -> generated routes -> Axum router -> Tokio server
 ~~~
 
 The starter generator currently supports web applications, JSON APIs,
-services, and modular monoliths. The starters use the same Ember programming
+services, and modular monoliths. The starters use the same Scafra programming
 model; the selected shape changes the sample code and layout, not the runtime
 architecture.
 
-## Why use Ember?
+## Why use Scafra?
 
 - **Compile-time safety.** Services, dependencies, routes, and configuration
-  are represented with ordinary Rust types and compiler-checked code. Ember
+  are represented with ordinary Rust types and compiler-checked code. Scafra
   does not depend on runtime reflection, string-key lookups, or a global service
   locator.
-- **Fast project startup.** `ember new` creates a working application with a
+- **Fast project startup.** `scafra new` creates a working application with a
   Cargo manifest, configuration defaults, source layout, and a representative
   example.
 - **Batteries included.** The framework provides conventions for routing,
   configuration profiles, structured logging, graceful shutdown, health and
   readiness endpoints, metrics, security options, and scheduled tasks.
-- **Familiar Rust foundations.** Ember extends Axum, Tokio, Tower, Serde, and
+- **Familiar Rust foundations.** Scafra extends Axum, Tokio, Tower, Serde, and
   `tracing`; developers can use their existing knowledge and add direct
   dependencies when they need lower-level control.
 - **Clear application structure.** Generated applications separate controllers,
@@ -58,39 +58,39 @@ architecture.
   standard runner with an application-owned Axum/Tokio entry point when a more
   specialized server boundary is needed.
 
-Ember is currently an MVP. The implemented application shapes are web
+Scafra is currently an MVP. The implemented application shapes are web
 applications, JSON APIs, services, and modular monoliths.
 
-## Why Rust developers choose Ember
+## Why Rust developers choose Scafra
 
-Ember is intended to feel like Rust, not like a foreign runtime dropped on top
+Scafra is intended to feel like Rust, not like a foreign runtime dropped on top
 of Rust. The framework favors explicit types, normal Cargo projects, compiler
 errors, and libraries from the standard Rust web ecosystem.
 
 - **No hidden runtime magic.** Component discovery and route registration are
   generated at build time. There is no runtime filesystem scan, reflection
   layer, or string-based dependency container to debug in production.
-- **Generated code stays inspectable.** Ember's CLI writes ordinary Rust source
+- **Generated code stays inspectable.** Scafra's CLI writes ordinary Rust source
   files and a normal Cargo project. When something goes wrong, developers can
   read the generated project, follow the compiler diagnostics, and take
   ownership of the code.
-- **Use the ecosystem you already know.** Ember exposes Axum, Tower, Serde,
+- **Use the ecosystem you already know.** Scafra exposes Axum, Tower, Serde,
   Tokio, and `tracing` at the application boundary. Existing middleware,
   extractors, serializers, test tools, and libraries remain useful.
 - **Abstractions without giving up control.** The standard runner provides
   sensible application startup and shutdown, while `build_router()` and the
   lower-level re-exports make it possible to customize the HTTP boundary.
 - **Adopt it incrementally.** Start with one service or generated application,
-  keep direct Rust code where it is clearer, and introduce Ember conventions
+  keep direct Rust code where it is clearer, and introduce Scafra conventions
   only where they reduce repetition.
-- **Designed for performance-sensitive services.** Ember builds on async Rust
+- **Designed for performance-sensitive services.** Scafra builds on async Rust
   and Axum rather than introducing a separate execution model. The framework's
   goal is to organize application code without turning the hot path into a
   dynamic object graph.
 
-## Why contribute to Ember?
+## Why contribute to Scafra?
 
-Ember is also a place to improve the Rust web development experience itself.
+Scafra is also a place to improve the Rust web development experience itself.
 Contributors can work on focused crates instead of one large runtime: macros,
 configuration, lifecycle management, routing, security, scheduling, the CLI,
 or the project generator can evolve independently behind clear boundaries.
@@ -101,7 +101,7 @@ The project is a good fit for Rust developers who want to:
 - improve compile-time APIs, diagnostics, and generated-code ergonomics;
 - build reusable tooling for Axum and the wider async Rust ecosystem;
 - contribute examples, tests, documentation, or starter templates; and
-- help decide which framework features belong in Ember — and which should stay
+- help decide which framework features belong in Scafra — and which should stay
   in existing ecosystem crates.
 
 The current MVP keeps the scope deliberately understandable. New contributors
@@ -113,7 +113,7 @@ guide](docs/architecture.md) before opening a design-heavy change.
 ## Quick start from this workspace
 
 ~~~bash
-cargo run -p ember-framework-cli -- new hello-world
+cargo run -p scafra-cli -- new hello-world
 cd hello-world
 cargo run
 # In another terminal:
@@ -124,7 +124,7 @@ curl http://127.0.0.1:8080/hello/Alice
 The same application shape is available to users through the facade crate:
 
 ~~~rust
-use ember::prelude::*;
+use scafra::prelude::*;
 
 #[service]
 struct GreetingService;
@@ -148,7 +148,7 @@ impl GreetingController {
     }
 }
 
-#[ember::main]
+#[scafra::main]
 async fn main() {}
 ~~~
 
@@ -161,18 +161,18 @@ handler adapters. The default path uses link-time static route descriptors to
 support the empty application entry point; it does not provide a runtime
 service locator or reflection-based scanning. Applications that need explicit
 multi-file provider wiring can opt into the build-time typed graph with
-`ember_build::discover_graph`; see the [typed graph guide](docs/guides/dependency-graph.md).
+`scafra_build::discover_graph`; see the [typed graph guide](docs/guides/dependency-graph.md).
 
 ## Create an application
 
-From this checkout, create a starter with `ember new`:
+From this checkout, create a starter with `scafra new`:
 
 ~~~bash
-cargo run -p ember-framework-cli -- new storefront
-cargo run -p ember-framework-cli -- new billing-api --kind api
-cargo run -p ember-framework-cli -- new catalog --kind service
-cargo run -p ember-framework-cli -- new admin --kind web
-cargo run -p ember-framework-cli -- new backoffice --kind monolith
+cargo run -p scafra-cli -- new storefront
+cargo run -p scafra-cli -- new billing-api --kind api
+cargo run -p scafra-cli -- new catalog --kind service
+cargo run -p scafra-cli -- new admin --kind web
+cargo run -p scafra-cli -- new backoffice --kind monolith
 ~~~
 
 Omitting `--kind` defaults to `web`. The canonical values are `web`, `api`,
@@ -205,7 +205,7 @@ In another terminal:
 curl http://127.0.0.1:8080/api/greetings/Alice
 ~~~
 
-Ember supports Spring Boot Actuator-style operational endpoints. They are
+Scafra supports Spring Boot Actuator-style operational endpoints. They are
 opt-in and can be selected individually or all at once:
 
 They can be disabled in `application.yaml`:
@@ -227,7 +227,7 @@ with `actuator.security.enabled=true` and a bearer token. Applications can
 register checks with `register_health_check!`; configured checks return `DOWN`
 and HTTP 503 when they fail.
 
-Ember's application security is opt-in. It supports a shared bearer token,
+Scafra's application security is opt-in. It supports a shared bearer token,
 HTTP Basic authentication, or JWT resource-server validation. JWT can use a
 local HS256 secret for development, or discover RSA signing keys from an OIDC
 issuer:
@@ -239,21 +239,21 @@ security:
   jwt:
     enabled: true
     issuer_uri: https://issuer.example.com
-    audiences: [ember-api]
+    audiences: [scafra-api]
     required_scopes: [api.read]
 ~~~
 
 For local development, replace `issuer_uri` with a development-only
 `secret`. A direct `jwk_set_uri` can be used when issuer discovery is not
-available; production secrets should be supplied through Ember's environment
+available; production secrets should be supplied through Scafra's environment
 configuration.
 
-Application logging is available directly from the prelude. Ember re-exports
+Application logging is available directly from the prelude. Scafra re-exports
 structured `tracing` macros, so services do not need to call the foundation
 module explicitly:
 
 ~~~rust
-use ember::prelude::*;
+use scafra::prelude::*;
 
 #[service]
 struct OrderService;
@@ -271,7 +271,7 @@ impl OrderService {
 with the service type and function name; arguments and `self` are excluded by
 default so logging does not accidentally require `Debug` or expose values.
 
-The optional `ember-framework-bootui` dependency uses this configuration. It is disabled
+The optional `scafra-bootui` dependency uses this configuration. It is disabled
 and local-only by default:
 
 ~~~yaml
@@ -286,17 +286,17 @@ bootui:
 The dashboard is added explicitly by the application:
 
 ~~~rust
-let router = ember_bootui::layer(router, &config.bootui);
+let router = scafra_bootui::layer(router, &config.bootui);
 ~~~
 
-When using Ember's standard runner, add `use ember_bootui as _;` to the
+When using Scafra's standard runner, add `use scafra_bootui as _;` to the
 application entrypoint so the optional dependency is linked and appears in the
 startup diagnostics.
 
 The active profile can be selected from either supported configuration format:
 
 ~~~yaml
-ember:
+scafra:
   profiles:
     active: dev
 
@@ -312,7 +312,7 @@ startup:
   show_config: true
 ~~~
 
-Ember then loads `application-dev.yaml` or `application-dev.properties` after
+Scafra then loads `application-dev.yaml` or `application-dev.properties` after
 the base configuration. If no active profile is configured, `default` is used.
 
 Services can register a task with `register_scheduled_task!("cleanup", 60000,
@@ -345,14 +345,14 @@ my-app/
 The monolith starter additionally includes a bounded `src/main/modules/catalog/`
 module; the other starters do not create that directory.
 
-'#[ember::main]' discovers the module tree during compilation, so new Rust files
+'#[scafra::main]' discovers the module tree during compilation, so new Rust files
 under 'src/main/' participate without adding manual 'mod' declarations to
 'main.rs'. Rust visibility and imports remain normal and explicit inside those
 files. Applications that opt into the typed graph can use
-'ember_build::discover_graph' from an application-owned 'build.rs'.
+'scafra_build::discover_graph' from an application-owned 'build.rs'.
 
 The CLI writes fixed, inspectable files: a Cargo manifest, configuration
-defaults under `src/resources/`, a `#[ember::main]` entry point, standard
+defaults under `src/resources/`, a `#[scafra::main]` entry point, standard
 responsibility directories under `src/main/`, and the shape-specific sample.
 API and monolith starters add an application-level Serde dependency for their
 JSON models; web and service starters do not.
@@ -371,11 +371,11 @@ symlinks—are never overwritten, and the destination name is normalized for
 Cargo package naming. Generated source then receives ordinary Rust compiler
 and macro diagnostics. At runtime the current runner loads and validates the
 supported configuration sources, initializes foundation logging, registers
-the generated routes, and uses Ember's current tracing, body-limit, and
+the generated routes, and uses Scafra's current tracing, body-limit, and
 graceful-shutdown behavior. A generated startup failure emits the bounded
 `application_startup_failed` event with an `error_kind` of `configuration`,
 `address`, `lifecycle`, or `web`; it does not print arbitrary provider or
-configuration error text. Direct callers of `ember::run` still receive the
+configuration error text. Direct callers of `scafra::run` still receive the
 typed `StartupError` for application-owned handling.
 
 Generation is a bounded sequence of directory and file writes, not an atomic
@@ -387,22 +387,22 @@ release-gate check in an environment that permits loopback listeners.
 
 The convention is optional. Edit or replace the generated controllers,
 services, providers, and configuration; use `build_router()` and the
-`ember::web::axum`/Tower re-exports for lower-level HTTP composition; or
-replace `#[ember::main]` with an application-owned Axum/Tokio entry point when
+`scafra::web::axum`/Tower re-exports for lower-level HTTP composition; or
+replace `#[scafra::main]` with an application-owned Axum/Tokio entry point when
 you need a custom server boundary. That entry point must declare the application
 modules manually so static route registrations remain linked. Applications
-that explicitly use `ember_build::discover` can instead include its generated
+that explicitly use `scafra_build::discover` can instead include its generated
 module bridge. Tokio is not a
-stable public Ember re-export, so an application-owned Tokio entry point should
-declare `tokio` directly. Axum can use the `ember::web::axum` re-export or a
+stable public Scafra re-export, so an application-owned Tokio entry point should
+declare `tokio` directly. Axum can use the `scafra::web::axum` re-export or a
 direct `axum` dependency. A custom server-builder API is not part of the
-current starter contract. Replacing `#[ember::main]` transfers configuration,
+current starter contract. Replacing `#[scafra::main]` transfers configuration,
 startup, and graceful-shutdown ownership to the application; `build_router()`
 only builds the router and does not perform that orchestration.
 
 Starter generation is current. The opt-in generated typed graph is also
 current, but it is not enabled by the starter templates and does not inject
-values into controllers or `ember::run`.
+values into controllers or `scafra::run`.
 Runtime filesystem scanning, reflection-based discovery, a global mutable
 container, and string-key dependency lookup are **Rejected for now** as the
 primary architecture.
@@ -425,28 +425,28 @@ cargo doc --workspace --no-deps
 The CLI is available from this workspace:
 
 ~~~bash
-cargo run -p ember-framework-cli -- new my-app
-cargo run -p ember-framework-cli -- check
-cargo run -p ember-framework-cli -- dev
+cargo run -p scafra-cli -- new my-app
+cargo run -p scafra-cli -- check
+cargo run -p scafra-cli -- dev
 ~~~
 
-`ember dev` is the development watcher. Run it once from the application
+`scafra dev` is the development watcher. Run it once from the application
 directory; it watches `src/`, `tests/`, `examples/`, `Cargo.toml`, and
 `Cargo.lock`, then restarts the application when code or configuration changes.
 Cargo's incremental compilation means dependencies are reused and rebuilt only
 when the manifest or lockfile requires it.
 
-When run from this checkout, 'ember new' writes local path dependencies so the
+When run from this checkout, 'scafra new' writes local path dependencies so the
 generated project compiles immediately. Its manifest also declares an empty
 `[workspace]` table, so creating the project inside this checkout does not make
-it an unlisted member of Ember's workspace. A packaged CLI uses the published
+it an unlisted member of Scafra's workspace. A packaged CLI uses the published
 `0.1` dependency fallback.
 
 ## Configuration
 
 The standard runner loads supported files from the current directory. The
 precedence is defaults, base YAML/YML/properties files, profile
-YAML/YML/properties files, sorted `EMBER_*` environment variables, then
+YAML/YML/properties files, sorted `SCAFRA_*` environment variables, then
 explicit loader overrides:
 
 ~~~yaml
@@ -467,33 +467,33 @@ logging.level=info
 logging.backtrace=off
 ~~~
 
-Set `EMBER_PROFILE=test` to activate the matching YAML, YML, and properties
-profile files. For example, `EMBER_SERVER_PORT=9000 cargo run`
+Set `SCAFRA_PROFILE=test` to activate the matching YAML, YML, and properties
+profile files. For example, `SCAFRA_SERVER_PORT=9000 cargo run`
 changes the listening port without changing source code. `RUST_LOG` remains an
 explicit advanced tracing-filter override; invalid directives fall back to the
 typed `logging.level` without echoing the directive.
 
 ## Crates
 
-* 'ember-framework' is the published facade package, with Rust library name
-  `ember` and dependency alias `ember` for application developers.
-* 'ember-framework-core' contains framework-neutral lifecycle and metadata types.
-* 'ember-framework-foundation' contains the framework-neutral typed logging and backtrace
-  policy used by runtime consumers; it depends on no Ember crate.
-* 'ember-framework-macros' contains the procedural macros and compile-failure tests.
-* 'ember-framework-web' owns Axum, Tokio, Tower, route registration, and graceful
+* 'scafra' is the published facade package, with Rust library name
+  `scafra` and dependency alias `scafra` for application developers.
+* 'scafra-core' contains framework-neutral lifecycle and metadata types.
+* 'scafra-foundation' contains the framework-neutral typed logging and backtrace
+  policy used by runtime consumers; it depends on no Scafra crate.
+* 'scafra-macros' contains the procedural macros and compile-failure tests.
+* 'scafra-web' owns Axum, Tokio, Tower, route registration, and graceful
   shutdown while consuming foundation logging.
-* 'ember-framework-config' provides typed YAML/YML/properties loading with profile,
+* 'scafra-config' provides typed YAML/YML/properties loading with profile,
   environment, and explicit override precedence.
-* 'ember-framework-build' generates the convention-based Rust module tree from
+* 'scafra-build' generates the convention-based Rust module tree from
   'build.rs'.
-* 'ember-framework-cli' provides 'new', 'dev', and 'check'; it installs the
-  `ember` executable.
+* 'scafra-cli' provides 'new', 'dev', and 'check'; it installs the
+  `scafra` executable.
 
-The crates.io package for the application facade is `ember-framework`; the
-dependency is aliased as `ember` so application code can keep using
-`use ember::prelude::*`. After publication, install the CLI with
-`cargo install ember-framework-cli`.
+The crates.io package for the application facade is `scafra`; the
+dependency is aliased as `scafra` so application code can keep using
+`use scafra::prelude::*`. After publication, install the CLI with
+`cargo install scafra-cli`.
 
 See [docs/publishing.md](docs/publishing.md) for the GitHub Actions setup and
 release tag process.
@@ -504,7 +504,7 @@ design boundaries. Generated behavior is described in
 
 ## Security defaults
 
-The default listener binds to '127.0.0.1:8080', not all interfaces. Ember
+The default listener binds to '127.0.0.1:8080', not all interfaces. Scafra
 installs a 1 MiB default request body limit and request tracing without logging
 request bodies.
 

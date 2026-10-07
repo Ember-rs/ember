@@ -1,0 +1,13 @@
+[package]
+name = "scafra-scheduler"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Configurable scheduled tasks for Scafra applications"
+
+[dependencies]
+inventory.workspace = true
+serde.workspace = true
+tokio.workspace = true

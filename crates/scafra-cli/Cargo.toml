@@ -1,0 +1,21 @@
+[package]
+name = "scafra-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Command-line tooling for Scafra applications"
+
+[[bin]]
+name = "scafra"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+scafra-foundation.workspace = true
+
+[dev-dependencies]
+serde_json = "1"
