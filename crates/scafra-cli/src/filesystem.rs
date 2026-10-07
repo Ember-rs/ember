@@ -83,9 +83,7 @@ pub(crate) fn local_dependency(project: &Path, package: &str) -> Result<Option<S
     })?;
     let relative = relative_path(&project, &local_crate)?;
     let relative = manifest_path(&relative)?;
-    Ok(Some(format!(
-        "{package} = {{ path = \"{relative}\", version = \"0.1.0\" }}"
-    )))
+    Ok(Some(format!("{package} = {{ path = \"{relative}\" }}")))
 }
 
 fn absolute_path(path: &Path) -> Result<PathBuf> {

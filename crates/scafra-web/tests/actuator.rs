@@ -105,6 +105,6 @@ async fn exposes_health_liveness_readiness_and_info_aliases() {
         let (status, body) = get(path).await;
         assert_eq!(status, StatusCode::OK, "unexpected status for {path}");
         assert!(body.contains(r#""name":"scafra""#));
-        assert!(body.contains(r#""version":"0.1.0""#));
+        assert!(body.contains(&format!(r#""version":"{}""#, env!("CARGO_PKG_VERSION"))));
     }
 }
