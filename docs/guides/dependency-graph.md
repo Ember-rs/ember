@@ -16,10 +16,9 @@ providers during startup. Shared dependencies use `Arc<T>` on every consumer;
 the graph constructs one value and clones its handle for each consumer.
 
 Services and controllers are constructed with their generated `new(...)`
-constructors, so their dependencies do not need to implement `Default`. The
-macros no longer generate `Default` implementations for these types. Add
-`#[derive(Default)]` when a component is independently default constructible
-and callers need that API.
+constructors, so graph injection does not require `Default`. For compatibility
+with the standalone `build_router()` path, the macros retain conditional
+`Default` implementations when every field is itself default constructible.
 
 ## Important boundaries
 

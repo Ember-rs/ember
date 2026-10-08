@@ -26,6 +26,30 @@ pub(crate) fn expand_service(
         }
     };
     let (parameters, construction) = crate::parse::constructor_parts(data)?;
+    let default_bounds = data
+        .fields
+        .iter()
+        .map(|field| &field.ty)
+        .collect::<Vec<_>>();
+    let default_impl = if crate::parse::has_default_derive(&input.attrs) {
+        quote! {}
+    } else {
+        let default_construction = crate::parse::default_construction(data);
+        let where_clause = if default_bounds.is_empty() {
+            quote! {}
+        } else {
+            quote! {
+                where #(#default_bounds: ::std::default::Default,)*
+            }
+        };
+        quote! {
+            impl ::std::default::Default for #ident #where_clause {
+                fn default() -> Self {
+                    #default_construction
+                }
+            }
+        }
+    };
     Ok(quote! {
         #input
 
@@ -36,6 +60,8 @@ pub(crate) fn expand_service(
                 #construction
             }
         }
+
+        #default_impl
 
         ::scafra::core::__private::inventory::submit! {
             ::scafra::core::ComponentRegistration {
