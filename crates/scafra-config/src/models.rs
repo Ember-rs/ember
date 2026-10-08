@@ -9,6 +9,10 @@ pub struct ServerConfig {
     pub host: String,
     #[serde(default = "default_port")]
     pub port: u16,
+    /// Optional deadline, in seconds, for processing an HTTP request.
+    /// `None` preserves Scafra's historical behavior without a deadline.
+    #[serde(default, rename = "timeout", alias = "request_timeout_seconds")]
+    pub request_timeout_seconds: Option<u64>,
 }
 
 impl Default for ServerConfig {
@@ -16,6 +20,7 @@ impl Default for ServerConfig {
         Self {
             host: default_host(),
             port: default_port(),
+            request_timeout_seconds: None,
         }
     }
 }
@@ -111,6 +116,12 @@ impl Config for ScafraConfig {
             return Err(ValidationError {
                 field: "server.port",
                 message: "must be greater than zero".to_owned(),
+            });
+        }
+        if matches!(self.server.request_timeout_seconds, Some(0)) {
+            return Err(ValidationError {
+                field: "server.request_timeout_seconds",
+                message: "must be greater than zero when configured".to_owned(),
             });
         }
         if self.actuator.security.enabled && self.actuator.security.bearer_token.is_none() {

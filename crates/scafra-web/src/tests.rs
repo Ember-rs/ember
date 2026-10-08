@@ -187,6 +187,81 @@ async fn in_process_http_remains_an_axum_escape_hatch() {
 }
 
 #[tokio::test]
+async fn request_processing_timeout_allows_a_completed_request() {
+    use axum::{body::to_bytes, http::StatusCode};
+
+    let router = crate::routing::with_request_timeout(
+        Router::new().route("/probe", get(|| async { "ok" })),
+        Some(Duration::from_secs(30)),
+    );
+    let response = router
+        .oneshot(
+            Request::builder()
+                .uri("/probe")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(to_bytes(response.into_body(), 64).await.unwrap(), "ok");
+}
+
+#[tokio::test]
+async fn request_processing_timeout_returns_gateway_timeout_without_details() {
+    use axum::{body::to_bytes, http::StatusCode};
+
+    let router = crate::routing::with_request_timeout(
+        Router::new().route(
+            "/probe",
+            get(|| async { std::future::pending::<&'static str>().await }),
+        ),
+        // A zero deadline is deterministic: the timeout wins before the
+        // handler can produce a response, without relying on wall-clock time.
+        Some(Duration::ZERO),
+    );
+    let response = router
+        .oneshot(
+            Request::builder()
+                .uri("/probe")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::GATEWAY_TIMEOUT);
+    let body = to_bytes(response.into_body(), 1024).await.unwrap();
+    assert!(body.is_empty());
+}
+
+#[tokio::test]
+async fn missing_request_timeout_leaves_the_request_unbounded() {
+    use axum::body::to_bytes;
+
+    let router = crate::routing::with_request_timeout(
+        Router::new().route("/probe", get(|| async { "legacy behavior" })),
+        None,
+    );
+    let response = router
+        .oneshot(
+            Request::builder()
+                .uri("/probe")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), axum::http::StatusCode::OK);
+    assert_eq!(
+        to_bytes(response.into_body(), 64).await.unwrap(),
+        "legacy behavior"
+    );
+}
+
+#[tokio::test]
 #[ignore = "requires loopback listener permission; run with --include-ignored"]
 async fn active_requests_drain_before_a_clean_shutdown() {
     let started = Arc::new(Notify::new());

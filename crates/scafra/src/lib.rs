@@ -304,20 +304,25 @@ pub async fn run() -> std::result::Result<(), StartupError> {
     let scheduler = Scheduler::start(&config.scheduler);
     startup!(enabled = config.scheduler.enabled, "scheduler initialized");
     let policy = ShutdownPolicy::default();
-    let (result, reason) = match scafra_web::serve_on_with_policy_and_actuator_and_security(
-        address,
-        policy,
-        config.actuator,
-        config.security,
-    )
-    .await
-    {
-        Ok(outcome) => (Ok(()), outcome.reason()),
-        Err(error) => {
-            let reason = server_shutdown_reason(&error);
-            (Err(StartupError::from(error.into_web_error())), reason)
-        }
-    };
+    let (result, reason) =
+        match scafra_web::serve_on_with_policy_and_actuator_and_security_and_request_timeout(
+            address,
+            policy,
+            config.actuator,
+            config.security,
+            config
+                .server
+                .request_timeout_seconds
+                .map(std::time::Duration::from_secs),
+        )
+        .await
+        {
+            Ok(outcome) => (Ok(()), outcome.reason()),
+            Err(error) => {
+                let reason = server_shutdown_reason(&error);
+                (Err(StartupError::from(error.into_web_error())), reason)
+            }
+        };
     scheduler.stop();
     let shutdown = application
         .shutdown_with(reason, policy)
