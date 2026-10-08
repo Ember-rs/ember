@@ -66,6 +66,28 @@ async fn connect_when_ready(address: std::net::SocketAddr) -> TcpStream {
     .expect("the public server should bind within the readiness deadline")
 }
 
+async fn wait_until_listener_closes(address: std::net::SocketAddr) {
+    tokio::time::timeout(Duration::from_secs(5), async {
+        loop {
+            match TcpStream::connect(address).await {
+                Ok(connection) => drop(connection),
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        std::io::ErrorKind::ConnectionRefused | std::io::ErrorKind::ConnectionReset
+                    ) =>
+                {
+                    return;
+                }
+                Err(error) => panic!("the server listener should close cleanly: {error}"),
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("the server should stop accepting connections after shutdown is requested");
+}
+
 inventory::submit! {
     ControllerRegistration {
         controller: "server-bind-test-controller",
@@ -141,9 +163,14 @@ async fn public_server_serves_http_drains_active_requests_and_releases_listener(
     shutdown_handle
         .request()
         .expect("the application should request graceful shutdown");
+    wait_until_listener_closes(address).await;
+    assert!(
+        !server.is_finished(),
+        "the server should keep draining the active request after closing its listener"
+    );
     release_sender
         .send(())
-        .expect("the active request should be released after shutdown starts");
+        .expect("the active request should be released after graceful draining begins");
 
     let mut response = Vec::new();
     connection
