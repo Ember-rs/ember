@@ -149,7 +149,24 @@ async fn health(headers: HeaderMap, Extension(config): Extension<ActuatorConfig>
     if let Some(response) = protected(&headers, &config) {
         return response;
     }
-    let up = health_up(&config);
+    health_response(health_up(&config))
+}
+
+async fn liveness(headers: HeaderMap, Extension(config): Extension<ActuatorConfig>) -> Response {
+    if let Some(response) = protected(&headers, &config) {
+        return response;
+    }
+    health_response(true)
+}
+
+async fn readiness(headers: HeaderMap, Extension(config): Extension<ActuatorConfig>) -> Response {
+    if let Some(response) = protected(&headers, &config) {
+        return response;
+    }
+    health_response(health_up(&config))
+}
+
+fn health_response(up: bool) -> Response {
     (
         if up {
             StatusCode::OK
@@ -194,15 +211,15 @@ pub fn router(config: &ActuatorConfig) -> Router {
     }
     if config.is_enabled("live") {
         router = router
-            .route("/live", get(health))
-            .route("/health/live", get(health))
-            .route("/actuator/health/liveness", get(health));
+            .route("/live", get(liveness))
+            .route("/health/live", get(liveness))
+            .route("/actuator/health/liveness", get(liveness));
     }
     if config.is_enabled("ready") {
         router = router
-            .route("/ready", get(health))
-            .route("/health/ready", get(health))
-            .route("/actuator/health/readiness", get(health));
+            .route("/ready", get(readiness))
+            .route("/health/ready", get(readiness))
+            .route("/actuator/health/readiness", get(readiness));
     }
     if config.is_enabled("info") {
         router = router
