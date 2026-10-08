@@ -171,7 +171,7 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
             // standalone controllers keep the default-construction path.
             use ::scafra::web::__private::DefaultControllerRegistration as _;
             let controller = ::std::marker::PhantomData::<#controller>;
-            (&&controller).register_default_routes(router)
+            (&controller).register_default_routes(router)
         }
 
         ::scafra::web::__private::inventory::submit! {

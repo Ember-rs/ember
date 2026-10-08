@@ -51,13 +51,13 @@ pub trait DefaultControllerRegistration {
     fn register_default_routes(self, router: Router) -> Router;
 }
 
-impl<T> DefaultControllerRegistration for &std::marker::PhantomData<T> {
+impl<T> DefaultControllerRegistration for std::marker::PhantomData<T> {
     fn register_default_routes(self, router: Router) -> Router {
         router
     }
 }
 
-impl<T> DefaultControllerRegistration for &&std::marker::PhantomData<T>
+impl<T> DefaultControllerRegistration for &std::marker::PhantomData<T>
 where
     T: ControllerRoutes + Default,
 {
