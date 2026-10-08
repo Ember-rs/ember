@@ -25,15 +25,21 @@ pub(crate) struct GraphNode {
     pub(crate) output: String,
     pub(crate) output_type: String,
     pub(crate) source: String,
-    pub(crate) dependencies: Vec<String>,
+    pub(crate) dependencies: Vec<GraphDependency>,
     pub(crate) provider_expression: String,
     pub(crate) fallible: bool,
+}
+
+pub(crate) struct GraphDependency {
+    pub(crate) output: String,
+    pub(crate) shared: bool,
 }
 
 pub(crate) struct GraphEdge {
     pub(crate) consumer: String,
     pub(crate) dependency: String,
     pub(crate) source: String,
+    pub(crate) shared: bool,
 }
 
 pub(crate) struct GraphModel {

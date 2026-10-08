@@ -567,12 +567,21 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
     let project = workspace.root.join("web");
 
     run_cli(&["new", project.to_str().unwrap()]);
+    let bean_path = project.join("src/main/beans/greeting_prefix.rs");
+    let original_bean = fs::read_to_string(&bean_path).unwrap();
+    let fallible_bean = original_bean.replace(
+        "pub fn greeting_prefix() -> GreetingPrefix {\n    GreetingPrefix(String::from(\"Hello,\"))\n}",
+        "pub fn greeting_prefix() -> std::result::Result<GreetingPrefix, std::io::Error> {\n    if std::env::var_os(\"SCAFRA_FAIL_PROVIDER\").is_some() {\n        Err(std::io::Error::other(\"secret provider detail\"))\n    } else {\n        Ok(GreetingPrefix(String::from(\"Hello,\")))\n    }\n}",
+    );
+    assert_ne!(fallible_bean, original_bean);
+    fs::write(bean_path, fallible_bean).unwrap();
     cargo_build(&project, &target_dir);
 
     let executable = target_dir.join("debug").join("web");
     let child = Command::new(&executable)
         .current_dir(&project)
-        .env("SCAFRA_SERVER_PORT", "not-a-port")
+        .env("SCAFRA_SERVER_PORT", "18091")
+        .env("SCAFRA_FAIL_PROVIDER", "1")
         .env("SCAFRA_DEV_CHILD", "1")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -586,12 +595,12 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
         STARTUP_DIAGNOSTIC_TIMEOUT + Duration::from_secs(1),
         Kind::Web,
     )
-    .expect("invalid configuration should terminate the generated process within the bounded startup budget");
+    .expect("a failing graph provider should terminate the generated process within the bounded startup budget");
     let diagnostic = child.startup_diagnostic();
 
     assert!(
         !status.success(),
-        "invalid configuration unexpectedly started"
+        "failing graph provider unexpectedly started"
     );
     assert!(
         started.elapsed() < STARTUP_DIAGNOSTIC_TIMEOUT + Duration::from_secs(2),
@@ -603,14 +612,17 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
         "startup failure diagnostic was not bounded successfully: {diagnostic}"
     );
     assert!(
-        diagnostic == "stdout: <no output>; stderr: <no output>"
-            || diagnostic.contains("Scafra application failed")
-            || diagnostic.contains("invalid configured server address"),
-        "startup failure diagnostic should remain bounded and stable: {diagnostic}"
+        diagnostic.contains("application_startup_failed")
+            && diagnostic.contains("error_kind=\"dependency_graph\""),
+        "provider failure should reach the bounded graph startup diagnostic: {diagnostic}"
+    );
+    assert!(
+        !diagnostic.contains("secret provider detail"),
+        "provider error details must remain redacted: {diagnostic}"
     );
 
     child
-        .force_cleanup("startup failure completion")
+        .force_cleanup("provider startup failure completion")
         .expect("an already-reaped startup failure must not require forced cleanup");
 }
 
@@ -805,6 +817,7 @@ fn generated_projects_serve_routes_and_shutdown_gracefully() {
         let executable = target_dir.join("debug").join(kind.cli_value());
         let child = Command::new(&executable)
             .current_dir(&project)
+            .env("SCAFRA_DEV_CHILD", "1")
             .env("SCAFRA_SERVER_PORT", port.to_string())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

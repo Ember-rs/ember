@@ -174,6 +174,7 @@ pub async fn serve_on_with_policy(
         scafra_actuator::ActuatorConfig::default(),
         scafra_security::SecurityConfig::default(),
         None,
+        None,
     )
     .await
 }
@@ -194,6 +195,7 @@ where
         policy,
         scafra_actuator::ActuatorConfig::default(),
         scafra_security::SecurityConfig::default(),
+        None,
         None,
     )
     .await
@@ -243,6 +245,29 @@ pub async fn serve_on_with_policy_and_actuator_and_security_and_request_timeout(
         actuator,
         security,
         request_timeout,
+        None,
+    )
+    .await
+}
+
+/// Serves a router assembled from typed dependency injection while retaining
+/// Scafra's normal shutdown and middleware configuration.
+pub async fn serve_router_on_with_policy_and_actuator_and_security_and_request_timeout(
+    address: SocketAddr,
+    policy: ShutdownPolicy,
+    actuator: scafra_actuator::ActuatorConfig,
+    security: scafra_security::SecurityConfig,
+    request_timeout: Option<Duration>,
+    router: axum::Router,
+) -> Result<ServerOutcome, ServerError> {
+    serve_on_with_signal(
+        address,
+        shutdown_signal(),
+        policy,
+        actuator,
+        security,
+        request_timeout,
+        Some(router),
     )
     .await
 }
@@ -254,6 +279,7 @@ async fn serve_on_with_signal<F>(
     actuator: scafra_actuator::ActuatorConfig,
     security: scafra_security::SecurityConfig,
     request_timeout: Option<Duration>,
+    supplied_router: Option<axum::Router>,
 ) -> Result<ServerOutcome, ServerError>
 where
     F: Future<Output = Result<ShutdownReason, WebError>> + Send + 'static,
@@ -264,8 +290,11 @@ where
         security = security.enabled,
         "web configuration initialized"
     );
-    let router = crate::routing::build_router_with_timeout(&actuator, &security, request_timeout)
-        .map_err(ServerError::from)?;
+    let router = match supplied_router {
+        Some(router) => router,
+        None => crate::routing::build_router_with_timeout(&actuator, &security, request_timeout)
+            .map_err(ServerError::from)?,
+    };
     scafra_foundation::startup!("application routes built");
     let listener = TcpListener::bind(address)
         .await

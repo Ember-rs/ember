@@ -105,6 +105,8 @@ mod tests {
             .to_string();
 
         assert!(expanded.contains("log_startup_failure"));
+        assert!(expanded.contains("run_with_router"));
+        assert!(expanded.contains("__scafra_graph :: compose"));
         assert!(!expanded.contains("% error"));
         assert!(!expanded.contains("Scafra application failed"));
     }

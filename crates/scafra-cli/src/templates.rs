@@ -63,11 +63,11 @@ fn add_web_files(files: &mut Vec<(&'static str, String)>) {
             "src/main/beans/greeting_prefix.rs",
             r#"use scafra::prelude::*;
 
-pub struct GreetingPrefix(pub &'static str);
+pub struct GreetingPrefix(pub String);
 
 #[bean]
 pub fn greeting_prefix() -> GreetingPrefix {
-    GreetingPrefix("Hello,")
+    GreetingPrefix(String::from("Hello,"))
 }
 "#
             .to_owned(),
@@ -95,17 +95,32 @@ impl HelloService {
             "src/main/controllers/hello_controller.rs",
             r#"use scafra::prelude::*;
 
+use std::sync::Arc;
+
 use crate::services::hello_service::HelloService;
 
 #[controller("/")]
 pub struct HelloController {
-    service: HelloService,
+    service: Arc<HelloService>,
 }
 
 #[routes]
 impl HelloController {
     #[get("/hello/{name}")]
     pub async fn hello(&self, name: Path<String>) -> String {
+        self.service.greet(&name)
+    }
+}
+
+#[controller("/")]
+pub struct RepeatedHelloController {
+    service: Arc<HelloService>,
+}
+
+#[routes]
+impl RepeatedHelloController {
+    #[get("/hello-again/{name}")]
+    pub async fn hello_again(&self, name: Path<String>) -> String {
         self.service.greet(&name)
     }
 }
@@ -333,10 +348,9 @@ dependency. Replacing `#[scafra::main]` transfers configuration, startup, and
 graceful-shutdown ownership to the application; `build_router()` only builds
 the router and does not perform that orchestration.
 
-Starter generation is **Current**. The opt-in typed generated dependency graph
-is also **Current**, but this starter uses the standard `#[scafra::main]`
-compile-time module discovery path and does not compose graph values
-automatically. Scafra's
+Starter generation and typed startup composition are **Current**. The standard
+`#[scafra::main]` path composes graph values and injects controller fields
+before route registration. Scafra's
 standard health, liveness, readiness, and info endpoints can be enabled from
 the application configuration, including Spring Boot-compatible `/actuator`
 aliases. Runtime filesystem scanning, reflection-based discovery, a global

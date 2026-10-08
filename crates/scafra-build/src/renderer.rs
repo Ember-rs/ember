@@ -42,15 +42,67 @@ pub(crate) fn render_graph(model: &GraphModel, output: &mut String) {
         }
         output.push_str(&format!(
             "        pub node_{index}: {},\n",
-            node.output_type
+            graph_output_type(model, node)
         ));
     }
     output.push_str("    }\n\n");
+    output.push_str("    impl Graph {\n        pub fn build_router(self, actuator: &::scafra::ActuatorConfig, security: &::scafra::SecurityConfig, request_timeout: Option<::std::time::Duration>) -> Result<::scafra::web::axum::Router, ::scafra::web::WebError> {\n            let mut router = ::scafra::actuator::router(actuator);\n            let mut routes = ::scafra::web::default_controller_metadata(&[");
+    for node in &model.nodes {
+        if node.kind == GraphNodeKind::Controller
+            && !model
+                .edges
+                .iter()
+                .any(|edge| edge.dependency == node.output)
+        {
+            output.push_str(&format!("{} ,", rust_string(&node.output)));
+        }
+    }
+    output.push_str("]);\n");
+    for node in &model.nodes {
+        if node.kind == GraphNodeKind::Controller
+            && !model
+                .edges
+                .iter()
+                .any(|edge| edge.dependency == node.output)
+        {
+            output.push_str(&format!(
+                "            routes.extend(<{} as ::scafra::web::ControllerRoutes>::route_metadata().iter().copied());\n",
+                node.output_type
+            ));
+        }
+    }
+    output.push_str("            ::scafra::web::validate_routes(&routes, actuator)?;\n            router = ::scafra::web::register_default_controllers(router, &[");
+    for node in &model.nodes {
+        if node.kind == GraphNodeKind::Controller
+            && !model
+                .edges
+                .iter()
+                .any(|edge| edge.dependency == node.output)
+        {
+            output.push_str(&format!("{} ,", rust_string(&node.output)));
+        }
+    }
+    output.push_str("]);\n");
+    for (index, node) in model.nodes.iter().enumerate() {
+        if node.kind != GraphNodeKind::Controller
+            || model
+                .edges
+                .iter()
+                .any(|edge| edge.dependency == node.output)
+        {
+            continue;
+        }
+        output.push_str(&format!(
+            "            router = {}::__scafra_register_routes_with(router, self.node_{});\n",
+            node.output_type, index
+        ));
+    }
+    output.push_str("            ::scafra::web::finish_router(router, &routes, actuator, security, request_timeout)\n        }\n    }\n\n");
     output.push_str("    #[derive(Default)]\n    pub struct Overrides {\n");
     for (index, node) in model.nodes.iter().enumerate() {
         output.push_str(&format!(
             "        pub node_{index}: Option<{}>,\n",
-            node.output_type
+            graph_output_type(model, node)
         ));
     }
     output.push_str("    }\n\n");
@@ -71,31 +123,52 @@ pub(crate) fn render_graph(model: &GraphModel, output: &mut String) {
                 let dependency_index = model
                     .nodes
                     .iter()
-                    .position(|candidate| candidate.output == *dependency)
+                    .position(|candidate| candidate.output == dependency.output)
                     .expect("validated graph dependency");
-                format!("node_{dependency_index}")
+                if dependency.shared {
+                    format!("node_{dependency_index}.clone()")
+                } else {
+                    format!("node_{dependency_index}")
+                }
             })
             .collect::<Vec<_>>()
             .join(", ");
         let call = format!("{}({arguments})", node.provider_expression);
+        let shared = graph_node_is_shared(model, node);
         if !node.fallible && node.dependencies.is_empty() {
-            output.push_str(&format!(
-                "        let node_{index} = overrides.node_{index}.take().unwrap_or_else({});\n",
-                node.provider_expression
-            ));
+            if shared {
+                output.push_str(&format!(
+                    "        let node_{index} = overrides.node_{index}.take().unwrap_or_else(|| ::std::sync::Arc::new({}()));\n",
+                    node.provider_expression
+                ));
+            } else {
+                output.push_str(&format!(
+                    "        let node_{index} = overrides.node_{index}.take().unwrap_or_else({});\n",
+                    node.provider_expression
+                ));
+            }
             continue;
         }
         output.push_str(&format!(
             "        let node_{index} = match overrides.node_{index}.take() {{\n            Some(value) => value,\n            None => {{\n"
         ));
         if node.fallible {
+            let result = if shared {
+                format!("{call}.map(::std::sync::Arc::new)")
+            } else {
+                call
+            };
             output.push_str(&format!(
-                "                {call}.map_err(|error| ::scafra::core::GraphError::provider_failure({}, ::scafra::core::GraphPhase::Construction, {}, error))?\n",
+                "                {result}.map_err(|error| ::scafra::core::GraphError::provider_failure({}, ::scafra::core::GraphPhase::Construction, {}, error))?\n",
                 rust_string(&node.provider),
                 rust_string(&node.source)
             ));
         } else {
-            output.push_str(&format!("                {call}\n"));
+            if shared {
+                output.push_str(&format!("                ::std::sync::Arc::new({call})\n"));
+            } else {
+                output.push_str(&format!("                {call}\n"));
+            }
         }
         output.push_str("            }\n        };\n");
     }
@@ -114,12 +187,28 @@ pub(crate) fn render_graph(model: &GraphModel, output: &mut String) {
     output.push_str("        })\n    }\n}\n");
 }
 
+fn graph_node_is_shared(model: &GraphModel, node: &crate::model::GraphNode) -> bool {
+    model
+        .edges
+        .iter()
+        .any(|edge| edge.dependency == node.output && edge.shared)
+}
+
+fn graph_output_type(model: &GraphModel, node: &crate::model::GraphNode) -> String {
+    if graph_node_is_shared(model, node) {
+        format!("::std::sync::Arc<{}>", node.output_type)
+    } else {
+        node.output_type.clone()
+    }
+}
+
 fn graph_kind_tokens(kind: GraphNodeKind) -> &'static str {
     match kind {
         GraphNodeKind::Bean => "::scafra::core::GraphNodeKind::Bean",
         GraphNodeKind::Service => "::scafra::core::GraphNodeKind::Service",
         GraphNodeKind::Component => "::scafra::core::GraphNodeKind::Component",
         GraphNodeKind::Repository => "::scafra::core::GraphNodeKind::Repository",
+        GraphNodeKind::Controller => "::scafra::core::GraphNodeKind::Controller",
     }
 }
 

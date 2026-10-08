@@ -45,8 +45,21 @@ pub(crate) fn expand_main_item(input: ItemFn) -> Result<proc_macro2::TokenStream
     let vis = input.vis;
     let body = input.block;
     let modules = discover_modules()?;
+    let graph_source = scafra_build::render_application_graph(
+        PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("manifest was checked"))
+            .join("src/main"),
+        PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("manifest was checked")),
+    )
+    .map_err(|error| Error::new(proc_macro2::Span::call_site(), error.to_string()))?;
+    let graph = graph_source.parse::<TokenStream>().map_err(|_| {
+        Error::new(
+            proc_macro2::Span::call_site(),
+            "could not render Scafra dependency graph",
+        )
+    })?;
     Ok(quote! {
         #modules
+        #graph
 
         #(#attrs)*
         #vis fn main() {
@@ -66,7 +79,14 @@ pub(crate) fn expand_main_item(input: ItemFn) -> Result<proc_macro2::TokenStream
                 .expect("Scafra could not create the Tokio runtime")
                 .block_on(async {
                     #body
-                    if let Err(error) = ::scafra::run().await {
+                    if let Err(error) = ::scafra::run_with_router(|config| {
+                        let graph = __scafra_graph::compose()?;
+                        graph.build_router(
+                            &config.actuator,
+                            &config.security,
+                            config.server.request_timeout_seconds.map(::std::time::Duration::from_secs),
+                        ).map_err(::scafra::StartupError::from)
+                    }).await {
                         ::scafra::__private::log_startup_failure(&error);
                         ::std::process::exit(1);
                     }

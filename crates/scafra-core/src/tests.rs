@@ -449,11 +449,15 @@ fn graph_validation_reports_duplicate_missing_and_cycles() {
             },
         ],
     };
-    assert!(shared
-        .plan()
-        .unwrap_err()
-        .to_string()
-        .contains("multiple consumers"));
+    assert_eq!(
+        shared
+            .plan()
+            .unwrap()
+            .ordered_nodes()
+            .map(|node| node.output)
+            .collect::<Vec<_>>(),
+        vec!["Root", "First", "Second"]
+    );
 }
 
 #[test]
