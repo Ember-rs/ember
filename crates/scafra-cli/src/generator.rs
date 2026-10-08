@@ -18,18 +18,19 @@ pub(crate) fn create_project(path: &Path, kind: ApplicationKind) -> Result<()> {
     ensure_destination_available(path)?;
     let package_name = package_name(path)?;
     let files = template_files(path, &package_name, kind)?;
-    let staging = StagingDirectory(create_staging_directory(path)?);
+    let staging = StagingDirectory(Some(create_staging_directory(path)?));
 
-    populate_project(&staging.0, &files)?;
+    populate_project(staging.path(), &files)?;
 
     ensure_destination_available(path)?;
-    publish_staging_directory(&staging.0, path).with_context(|| {
+    publish_staging_directory(staging.path(), path).with_context(|| {
         format!(
             "could not move completed project from {} to {}",
-            staging.0.display(),
+            staging.path().display(),
             path.display()
         )
     })?;
+    staging.persist();
 
     println!(
         "Created {} Scafra application in {}",
@@ -85,14 +86,10 @@ pub(crate) fn publish_staging_directory(staging: &Path, destination: &Path) -> s
     target_os = "redox",
     windows
 )))]
-pub(crate) fn publish_staging_directory(
-    _staging: &Path,
-    _destination: &Path,
-) -> std::io::Result<()> {
-    Err(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        "atomic no-replace directory moves are unsupported on this platform",
-    ))
+pub(crate) fn publish_staging_directory(staging: &Path, destination: &Path) -> std::io::Result<()> {
+    // Keep generation available on less common targets. On these platforms
+    // rename replacement behavior follows the standard library/OS semantics.
+    fs::rename(staging, destination)
 }
 
 fn populate_project(path: &Path, files: &[(&'static str, String)]) -> Result<()> {
@@ -114,11 +111,25 @@ fn populate_project(path: &Path, files: &[(&'static str, String)]) -> Result<()>
     Ok(())
 }
 
-struct StagingDirectory(PathBuf);
+struct StagingDirectory(Option<PathBuf>);
+
+impl StagingDirectory {
+    fn path(&self) -> &Path {
+        self.0
+            .as_deref()
+            .expect("staging path is present until persist")
+    }
+
+    fn persist(mut self) {
+        self.0.take();
+    }
+}
 
 impl Drop for StagingDirectory {
     fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
+        if let Some(path) = &self.0 {
+            let _ = fs::remove_dir_all(path);
+        }
     }
 }
 
@@ -158,4 +169,36 @@ fn create_staging_directory(destination: &Path) -> Result<PathBuf> {
         "could not allocate a unique staging directory beside {}",
         destination.display()
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::StagingDirectory;
+    use std::{
+        fs,
+        path::PathBuf,
+        process,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    #[test]
+    fn persisted_staging_guard_does_not_remove_recreated_path() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root =
+            std::env::temp_dir().join(format!("scafra-staging-persist-{}-{nonce}", process::id()));
+        let staging = root.join("staging");
+        let published = root.join("published");
+        fs::create_dir_all(&staging).unwrap();
+        let guard = StagingDirectory(Some(PathBuf::from(&staging)));
+
+        fs::rename(&staging, &published).unwrap();
+        fs::create_dir(&staging).unwrap();
+        guard.persist();
+
+        assert!(staging.is_dir());
+        fs::remove_dir_all(root).unwrap();
+    }
 }

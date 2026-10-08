@@ -384,8 +384,10 @@ while staging removes that temporary directory and leaves the requested
 destination absent. The destination is checked again immediately before the
 move, and the completed directory is published with an atomic no-replace move
 on Linux, macOS, and Windows, so a destination created concurrently is
-preserved. The repository's focused CLI and non-listener integration checks cover this preflight and
-compilation behavior. The live route/shutdown smoke remains a
+preserved. Other Rust targets use `std::fs::rename`, whose replacement behavior
+depends on the operating system. The repository's focused CLI and
+non-listener integration checks cover this preflight and compilation behavior.
+The live route/shutdown smoke remains a
 release-gate check in an environment that permits loopback listeners.
 
 The convention is optional. Edit or replace the generated controllers,
