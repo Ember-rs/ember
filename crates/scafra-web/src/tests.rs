@@ -1,11 +1,14 @@
 use super::*;
 use axum::{body::Body, http::Request, routing::get, Router};
 use scafra_foundation::{ShutdownPolicy, ShutdownReason};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tokio::{
     io::AsyncWriteExt,
     net::{TcpListener, TcpStream},
-    sync::Notify,
+    sync::oneshot,
 };
 use tower::ServiceExt;
 
@@ -24,9 +27,7 @@ async fn bind_test_listener() -> TcpListener {
     match TcpListener::bind("127.0.0.1:0").await {
         Ok(listener) => listener,
         Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
-            panic!(
-                "loopback listener permission is denied; this test is explicitly ignored in the default test run"
-            )
+            panic!("loopback listener permission is required for this HTTP lifecycle test")
         }
         Err(error) => panic!("the lifecycle test must be able to bind a local listener: {error}"),
     }
@@ -262,17 +263,32 @@ async fn missing_request_timeout_leaves_the_request_unbounded() {
 }
 
 #[tokio::test]
-#[ignore = "requires loopback listener permission; run with --include-ignored"]
 async fn active_requests_drain_before_a_clean_shutdown() {
-    let started = Arc::new(Notify::new());
-    let route_started = Arc::clone(&started);
+    let (started_sender, started_receiver) = oneshot::channel();
+    let (release_sender, release_receiver) = oneshot::channel();
+    let started_sender = Arc::new(Mutex::new(Some(started_sender)));
+    let release_receiver = Arc::new(Mutex::new(Some(release_receiver)));
+    let route_started = Arc::clone(&started_sender);
+    let route_release = Arc::clone(&release_receiver);
     let router = Router::new().route(
         "/slow",
         get(move || {
             let route_started = Arc::clone(&route_started);
+            let route_release = Arc::clone(&route_release);
             async move {
-                route_started.notify_one();
-                tokio::time::sleep(Duration::from_millis(20)).await;
+                route_started
+                    .lock()
+                    .expect("the request-started lock should not be poisoned")
+                    .take()
+                    .expect("the test should provide one request-started sender")
+                    .send(())
+                    .expect("the test should still wait for the request");
+                let release = route_release
+                    .lock()
+                    .expect("the request-release lock should not be poisoned")
+                    .take()
+                    .expect("the test should provide one request-release receiver");
+                let _ = release.await;
                 "ok"
             }
         }),
@@ -292,15 +308,19 @@ async fn active_requests_drain_before_a_clean_shutdown() {
     let mut connection = TcpStream::connect(address)
         .await
         .expect("the server should accept an in-process request");
-    let request_started = started.notified();
     connection
         .write_all(b"GET /slow HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
         .await
         .expect("the request should be written");
-    request_started.await;
+    started_receiver
+        .await
+        .expect("the request should enter its handler before shutdown");
     handle
         .request()
         .expect("the application request should be delivered");
+    release_sender
+        .send(())
+        .expect("the active request should be released after shutdown starts");
 
     let outcome = server
         .await
@@ -310,18 +330,22 @@ async fn active_requests_drain_before_a_clean_shutdown() {
 }
 
 #[tokio::test]
-#[ignore = "requires loopback listener permission; run with --include-ignored"]
 async fn active_requests_report_a_distinct_graceful_timeout() {
-    let started = Arc::new(Notify::new());
-    let route_started = Arc::clone(&started);
+    let (started_sender, started_receiver) = oneshot::channel();
+    let started_sender = Arc::new(Mutex::new(Some(started_sender)));
+    let route_started = Arc::clone(&started_sender);
     let router = Router::new().route(
         "/slow",
         get(move || {
             let route_started = Arc::clone(&route_started);
             async move {
-                route_started.notify_one();
-                tokio::time::sleep(Duration::from_secs(30)).await;
-                "never returned"
+                let _ = route_started
+                    .lock()
+                    .expect("the request-started lock should not be poisoned")
+                    .take()
+                    .expect("the test should provide one request-started sender")
+                    .send(());
+                std::future::pending::<&'static str>().await
             }
         }),
     );
@@ -340,12 +364,13 @@ async fn active_requests_report_a_distinct_graceful_timeout() {
     let mut connection = TcpStream::connect(address)
         .await
         .expect("the server should accept an in-process request");
-    let request_started = started.notified();
     connection
         .write_all(b"GET /slow HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
         .await
         .expect("the request should be written");
-    request_started.await;
+    started_receiver
+        .await
+        .expect("the request should enter its handler before shutdown");
     handle
         .request()
         .expect("the application request should be delivered");

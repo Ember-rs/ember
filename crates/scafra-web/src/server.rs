@@ -299,6 +299,16 @@ where
     tokio::pin!(server);
 
     let trigger = tokio::select! {
+        // Axum completes its serving future as soon as the graceful-shutdown
+        // future resolves. Prefer the trigger channel when both become ready
+        // in the same poll, so a successful shutdown is not mistaken for an
+        // unsolicited server exit.
+        biased;
+        trigger = &mut trigger_receiver => trigger.unwrap_or_else(|_| {
+            Err(WebError::Server(std::io::Error::other(
+                "Scafra shutdown trigger stopped unexpectedly",
+            )))
+        }),
         result = &mut server => {
             return match result {
                 Ok(()) => Err(ServerError::from(WebError::Server(std::io::Error::other(
@@ -307,11 +317,6 @@ where
                 Err(source) => Err(ServerError::from(WebError::Server(source))),
             };
         }
-        trigger = &mut trigger_receiver => trigger.unwrap_or_else(|_| {
-            Err(WebError::Server(std::io::Error::other(
-                "Scafra shutdown trigger stopped unexpectedly",
-            )))
-        }),
     };
 
     let (reason, trigger_error) = match trigger {
