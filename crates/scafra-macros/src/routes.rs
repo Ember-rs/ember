@@ -166,11 +166,12 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
         #[doc(hidden)]
         #[allow(non_snake_case)]
         fn #register_ident(router: ::scafra::web::axum::Router) -> ::scafra::web::axum::Router {
-            // Controllers belonging to the typed application graph are
-            // registered with their constructed instance by generated code.
-            // The inventory callback remains available for compatibility,
-            // but cannot construct a dependency-bearing controller itself.
-            router
+            // Typed graph composition excludes its controllers by name and
+            // registers them with their constructed instances. Compatible
+            // standalone controllers keep the default-construction path.
+            use ::scafra::web::__private::DefaultControllerRegistration as _;
+            let controller = ::std::marker::PhantomData::<#controller>;
+            (&&controller).register_default_routes(router)
         }
 
         ::scafra::web::__private::inventory::submit! {
