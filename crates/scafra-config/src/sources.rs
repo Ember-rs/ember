@@ -31,6 +31,13 @@ pub trait Config: Sized {
     type Error: std::error::Error + Send + Sync + 'static;
 
     fn validate(&self) -> Result<(), Self::Error>;
+
+    /// Returns safe, actionable validation details when the error contains no
+    /// configuration values. The default keeps arbitrary validator errors
+    /// redacted.
+    fn validation_details(_error: &Self::Error) -> Option<crate::ValidationError> {
+        None
+    }
 }
 
 /// Marks a typed properties struct with the configuration path it owns.
@@ -166,7 +173,7 @@ impl ConfigLoader {
             serde_yaml::from_value(value).map_err(|error| decode_error(error, &origins))?;
         config
             .validate()
-            .map_err(|error| ConfigError::Validation(error.to_string()))?;
+            .map_err(|error| validation_config_error::<T>(&error))?;
         Ok(config)
     }
 
@@ -260,7 +267,7 @@ impl ConfigLoader {
         let config = self.load::<T>()?;
         config
             .validate()
-            .map_err(|_| ConfigError::Validation("validation failed".to_owned()))?;
+            .map_err(|error| validation_config_error::<T>(&error))?;
         Ok(config)
     }
 
@@ -296,7 +303,8 @@ impl ConfigLoader {
         origins: &mut BTreeMap<String, String>,
     ) -> Result<(), ConfigError> {
         let prefix = format!("{}_", self.env_prefix.to_ascii_uppercase());
-        let mut variables = env::vars()
+        let mut variables = env::vars_os()
+            .filter_map(|(key, value)| Some((key.into_string().ok()?, value)))
             .filter(|(key, _)| key.starts_with(&prefix))
             .collect::<Vec<_>>();
         variables.sort_by(|left, right| left.0.cmp(&right.0));
@@ -314,6 +322,10 @@ impl ConfigLoader {
             if path.is_empty() {
                 continue;
             }
+            let value = value.into_string().map_err(|_| ConfigError::InvalidValue {
+                path: path.clone(),
+                source_kind: "environment".to_owned(),
+            })?;
             set_path(
                 target,
                 &path,
@@ -324,5 +336,12 @@ impl ConfigLoader {
             )?;
         }
         Ok(())
+    }
+}
+
+fn validation_config_error<T: Config>(error: &T::Error) -> ConfigError {
+    match T::validation_details(error) {
+        Some(details) => ConfigError::Validation(format!("{}: {}", details.field, details.message)),
+        None => ConfigError::Validation(String::new()),
     }
 }

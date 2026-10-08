@@ -1,5 +1,6 @@
-use std::io;
-#[derive(Debug, thiserror::Error)]
+use std::{fmt, io};
+
+#[derive(thiserror::Error)]
 pub enum ConfigError {
     #[error("could not read configuration file `{path}`: {source}")]
     Read {
@@ -37,4 +38,64 @@ pub enum ConfigError {
 
     #[error("configuration validation failed")]
     Validation(String),
+}
+
+impl ConfigError {
+    /// Returns validator-approved field and reason details, if available.
+    ///
+    /// Arbitrary validator errors are omitted by default. Implementations of
+    /// [`crate::Config::validation_details`] should only provide details that
+    /// do not contain configured values.
+    pub fn validation_details(&self) -> Option<&str> {
+        match self {
+            Self::Validation(details) if !details.is_empty() => Some(details),
+            _ => None,
+        }
+    }
+}
+
+impl fmt::Debug for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Read { path, source } => f
+                .debug_struct("Read")
+                .field("path", path)
+                .field("source", source)
+                .finish(),
+            Self::Parse {
+                path,
+                kind,
+                location,
+                message,
+            } => f
+                .debug_struct("Parse")
+                .field("path", path)
+                .field("kind", kind)
+                .field("location", location)
+                .field("message", message)
+                .finish(),
+            Self::Serialize => f.write_str("Serialize"),
+            Self::Decode { location } => f
+                .debug_struct("Decode")
+                .field("location", location)
+                .finish(),
+            Self::InvalidValue { path, source_kind } => f
+                .debug_struct("InvalidValue")
+                .field("path", path)
+                .field("source_kind", source_kind)
+                .finish(),
+            Self::StructuralConflict {
+                path,
+                source_kind,
+                location,
+            } => f
+                .debug_struct("StructuralConflict")
+                .field("path", path)
+                .field("source_kind", source_kind)
+                .field("location", location)
+                .finish(),
+            Self::InvalidProfile => f.write_str("InvalidProfile"),
+            Self::Validation(_) => f.write_str("Validation"),
+        }
+    }
 }
