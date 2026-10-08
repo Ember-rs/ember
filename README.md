@@ -224,8 +224,16 @@ Use `endpoints: "*"` for all endpoints, or
 
 Metrics can be exposed with `metrics`, and actuator endpoints can be protected
 with `actuator.security.enabled=true` and a bearer token. Applications can
-register checks with `register_health_check!`; configured checks return `DOWN`
-and HTTP 503 when they fail.
+register checks with `register_health_check!`. The readiness aliases `/ready`,
+`/health/ready`, and `/actuator/health/readiness` evaluate the registered
+checks selected by `actuator.health.checks` (an empty list selects all); a
+selected check that fails returns `DOWN` with HTTP 503. The liveness aliases
+`/live`, `/health/live`, and `/actuator/health/liveness` return `UP` without
+running registered health checks, so a dependency check does not make the
+process appear dead. The aggregate endpoints `/health` and `/actuator/health`
+retain the same configured-check evaluation as readiness. These responses
+report the result of the checks and request handler; they do not guarantee that
+every other part of the application or its dependencies is healthy.
 
 Scafra's application security is opt-in. It supports a shared bearer token,
 HTTP Basic authentication, or JWT resource-server validation. JWT can use a
