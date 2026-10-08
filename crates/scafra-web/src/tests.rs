@@ -33,6 +33,28 @@ async fn bind_test_listener() -> TcpListener {
     }
 }
 
+async fn wait_until_listener_closes(address: std::net::SocketAddr) {
+    tokio::time::timeout(Duration::from_secs(5), async {
+        loop {
+            match TcpStream::connect(address).await {
+                Ok(connection) => drop(connection),
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        std::io::ErrorKind::ConnectionRefused | std::io::ErrorKind::ConnectionReset
+                    ) =>
+                {
+                    return;
+                }
+                Err(error) => panic!("the server listener should close cleanly: {error}"),
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("the server should stop accepting connections after shutdown is requested");
+}
+
 inventory::submit! {
     ControllerRegistration {
         controller: "compatibility-controller",
@@ -318,9 +340,14 @@ async fn active_requests_drain_before_a_clean_shutdown() {
     handle
         .request()
         .expect("the application request should be delivered");
+    wait_until_listener_closes(address).await;
+    assert!(
+        !server.is_finished(),
+        "the server should keep draining the active request after closing its listener"
+    );
     release_sender
         .send(())
-        .expect("the active request should be released after shutdown starts");
+        .expect("the active request should be released after graceful draining begins");
 
     let outcome = server
         .await
