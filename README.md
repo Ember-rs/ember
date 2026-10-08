@@ -378,11 +378,16 @@ graceful-shutdown behavior. A generated startup failure emits the bounded
 configuration error text. Direct callers of `scafra::run` still receive the
 typed `StartupError` for application-owned handling.
 
-Generation is a bounded sequence of directory and file writes, not an atomic
-transaction. A filesystem error can therefore leave a partially written new
-destination; the CLI reports the path and does not remove user files or retry
-silently. The repository's focused CLI and non-listener integration checks cover this
-preflight and compilation behavior. The live route/shutdown smoke remains a
+Generation writes the complete project into a temporary sibling directory and
+moves it into place only after every file has been written. A filesystem error
+while staging removes that temporary directory and leaves the requested
+destination absent. The destination is checked again immediately before the
+move, and the completed directory is published with an atomic no-replace move
+on Linux, macOS, and Windows, so a destination created concurrently is
+preserved. Other Rust targets use `std::fs::rename`, whose replacement behavior
+depends on the operating system. The repository's focused CLI and
+non-listener integration checks cover this preflight and compilation behavior.
+The live route/shutdown smoke remains a
 release-gate check in an environment that permits loopback listeners.
 
 The convention is optional. Edit or replace the generated controllers,

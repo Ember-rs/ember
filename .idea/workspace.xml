@@ -44,35 +44,40 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="fix version error in file system" />
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="feat(web): add configurable request processing timeout" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:bench" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="19-add-configurable-request-timeouts-and-resource-protection" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "svp-bimo"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;svp-bimo&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Scafra/Scafra.git",
-    "accountId": "619e321f-11f0-4faf-9b83-79fd0d9f2d91"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Scafra/Scafra.git&quot;,
+    &quot;accountId&quot;: &quot;619e321f-11f0-4faf-9b83-79fd0d9f2d91&quot;
   }
-}]]></component>
+}</component>
   <component name="MacroExpansionManager">
     <option name="directoryName" value="Mi9WarHK" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4,
-  "fromUser": false
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3KKgk32xAtGIizRHsbqibcyUn8T" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -80,6 +85,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Cargo.bench.executor": "Run",
     "Cargo.build [ember].executor": "Run",
     "Cargo.build.executor": "Run",
     "CidrDebugProfileConversion": "true",
@@ -88,7 +94,8 @@
     "RunOnceActivity.rust.reset.selective.auto.import": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "feature/init-startup",
+    "git-widget-placeholder": "#24 on 10-implement-atomic-cli-project-generation",
+    "git.auto.fetch.suggestion.counter": "2",
     "last_opened_file_path": "/home/steffenp/workspace/ember-rs/ember-test-services",
     "nodejs_package_manager_path": "npm",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
@@ -99,9 +106,28 @@
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="cargo build" />
+      <command value="cargo bench" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.build">
+  <component name="RunManager" selected="Cargo.bench">
+    <configuration name="bench" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="buildProfileId" value="bench" />
+      <option name="command" value="bench" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="build [ember]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="build" />
@@ -139,8 +165,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Cargo.build" />
         <item itemvalue="Cargo.build [ember]" />
+        <item itemvalue="Cargo.build" />
+        <item itemvalue="Cargo.bench" />
+        <item itemvalue="Cargo.bench" />
+        <item itemvalue="Cargo.build" />
       </list>
     </recent_temporary>
   </component>
@@ -165,6 +194,8 @@
     <MESSAGE value="change name to Scafra" />
     <MESSAGE value="- CI-workflowet (.github/workflows/ci.yml) kører ved branch-push og pull request: formattering, workspace-check, Clippy med warnings som fejl og tests.&#10;- Publish-workflowet (.github/workflows/publish.yml) kører de samme kvalitetskontroller før publicering. Den udgiver crates i afhængighedsrækkefølge og venter på, at hver version kan ses i crates.io-indekset.&#10;- **Snapshots:** GitHub → Actions → _Publish to crates.io_ → _Run workflow_. Indtast en unik prerelease-version, fx `0.1.0-snapshot.1`, og vælg den branch, du vil teste. Versionsændringen sker kun i workflow-runneren.&#10;- **Stabil release:** Opdatér versionen i `Cargo.toml`, commit den, og push et matchende tag, fx `v0.1.0`." />
     <MESSAGE value="fix version error in file system" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix version error in file system" />
+    <MESSAGE value="Remove unused destination reservation code" />
+    <MESSAGE value="feat(web): add configurable request processing timeout" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(web): add configurable request processing timeout" />
   </component>
 </project>
