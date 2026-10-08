@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    sync::{Arc, Mutex},
+    sync::{mpsc, Arc, Mutex},
 };
 
 use super::*;
@@ -102,6 +102,57 @@ fn lifecycle_is_explicit_and_ordered() {
     assert_eq!(application.state(), LifecycleState::Running);
     application.shutdown().unwrap();
     assert_eq!(application.state(), LifecycleState::Stopped);
+}
+
+struct DropSignal(mpsc::Sender<()>);
+
+impl Drop for DropSignal {
+    fn drop(&mut self) {
+        let _ = self.0.send(());
+    }
+}
+
+struct ResourceHook(Mutex<Option<DropSignal>>);
+
+impl LifecycleHook for ResourceHook {
+    fn name(&self) -> &'static str {
+        "resource-hook"
+    }
+
+    fn on_start(&self, _: &ApplicationContext) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn on_shutdown(&self, _: &ApplicationContext) -> Result<(), String> {
+        self.0
+            .lock()
+            .map_err(|_| "resource lock was poisoned".to_owned())?
+            .take();
+        Ok(())
+    }
+}
+
+#[test]
+fn shutdown_releases_resources_owned_by_lifecycle_hooks() {
+    let (released_sender, released_receiver) = mpsc::channel();
+    let resource = DropSignal(released_sender);
+    let mut application = Application::new(ApplicationContext::default())
+        .with_hook(ResourceHook(Mutex::new(Some(resource))));
+
+    application.start().expect("the resource hook should start");
+    assert!(matches!(
+        released_receiver.try_recv(),
+        Err(mpsc::TryRecvError::Empty)
+    ));
+
+    application
+        .shutdown()
+        .expect("the resource hook should shut down cleanly");
+    assert_eq!(
+        released_receiver.try_recv(),
+        Ok(()),
+        "the hook should release its resource as part of shutdown"
+    );
 }
 
 #[test]
