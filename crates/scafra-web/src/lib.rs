@@ -16,7 +16,6 @@ pub use tower;
 /// crates directly.
 #[doc(hidden)]
 pub mod __private {
-    pub use crate::registration::DefaultControllerRegistration;
     pub use inventory;
 }
 

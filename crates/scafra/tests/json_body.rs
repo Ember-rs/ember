@@ -15,7 +15,7 @@ struct GreetingRequest {
 #[controller("/facade-json")]
 struct FacadeJsonController;
 
-#[routes]
+#[routes(default)]
 impl FacadeJsonController {
     #[post("/greet")]
     async fn greet(&self, payload: JsonBody<GreetingRequest>) -> String {

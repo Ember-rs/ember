@@ -26,29 +26,16 @@ pub(crate) fn expand_service(
         }
     };
     let (parameters, construction) = crate::parse::constructor_parts(data)?;
-    let default_bounds = data
-        .fields
-        .iter()
-        .map(|field| &field.ty)
-        .collect::<Vec<_>>();
-    let default_impl = if crate::parse::has_default_derive(&input.attrs) {
-        quote! {}
-    } else {
-        let default_construction = crate::parse::default_construction(data);
-        let where_clause = if default_bounds.is_empty() {
-            quote! {}
-        } else {
-            quote! {
-                where #(#default_bounds: ::std::default::Default,)*
-            }
-        };
+    let default_impl = if matches!(data.fields, syn::Fields::Unit)
+        && !crate::parse::has_default_derive(&input.attrs)
+    {
         quote! {
-            impl ::std::default::Default for #ident #where_clause {
-                fn default() -> Self {
-                    #default_construction
-                }
+            impl ::std::default::Default for #ident {
+                fn default() -> Self { Self }
             }
         }
+    } else {
+        quote! {}
     };
     Ok(quote! {
         #input

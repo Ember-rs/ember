@@ -3,7 +3,22 @@ use proc_macro2::Span;
 use quote::{format_ident, quote};
 use syn::{Attribute, Error, FnArg, ItemImpl, LitStr, Result, Type};
 
-pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStream> {
+pub(crate) fn expand_routes(
+    attr: TokenStream,
+    item: TokenStream,
+) -> Result<proc_macro2::TokenStream> {
+    let default_routes = if attr.is_empty() {
+        false
+    } else {
+        let mode = syn::parse::<syn::Ident>(attr)?;
+        if mode != "default" {
+            return Err(Error::new_spanned(
+                mode,
+                "routes only accepts the `default` mode",
+            ));
+        }
+        true
+    };
     let mut input = syn::parse::<ItemImpl>(item)?;
     if input.trait_.is_some() {
         return Err(Error::new_spanned(
@@ -127,6 +142,11 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
 
     let metadata_ident = format_ident!("__SCAFRA_{}_ROUTES", controller);
     let register_ident = format_ident!("__scafra_register_default_{}", controller);
+    let default_registration = if default_routes {
+        quote!(<#controller as ::scafra::web::ControllerRoutes>::register_routes(router))
+    } else {
+        quote!(router)
+    };
     Ok(quote! {
         #input
 
@@ -166,12 +186,10 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
         #[doc(hidden)]
         #[allow(non_snake_case)]
         fn #register_ident(router: ::scafra::web::axum::Router) -> ::scafra::web::axum::Router {
-            // Typed graph composition excludes its controllers by name and
-            // registers them with their constructed instances. Compatible
-            // standalone controllers keep the default-construction path.
-            use ::scafra::web::__private::DefaultControllerRegistration as _;
-            let controller = ::std::marker::PhantomData::<#controller>;
-            (&controller).register_default_routes(router)
+            // Graph-composed controllers are registered with their constructed
+            // instances. Legacy default construction is opt-in with
+            // `#[routes(default)]`.
+            #default_registration
         }
 
         ::scafra::web::__private::inventory::submit! {

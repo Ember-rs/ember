@@ -53,7 +53,7 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn routes(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    diagnostics::into_token_stream(routes::expand_routes(item))
+    diagnostics::into_token_stream(routes::expand_routes(_attr, item))
 }
 
 #[proc_macro_attribute]

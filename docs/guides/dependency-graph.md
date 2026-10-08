@@ -17,8 +17,9 @@ the graph constructs one value and clones its handle for each consumer.
 
 Services and controllers are constructed with their generated `new(...)`
 constructors, so graph injection does not require `Default`. For compatibility
-with the standalone `build_router()` path, the macros retain conditional
-`Default` implementations when every field is itself default constructible.
+with standalone `build_router()`, use `#[routes(default)]` on controllers that
+implement `Default`. Graph-composed controllers use `#[routes]` and are
+registered with their constructed instances.
 
 ## Important boundaries
 

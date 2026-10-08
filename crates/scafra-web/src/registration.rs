@@ -43,29 +43,6 @@ pub trait ControllerRoutes: Send + Sync + 'static {
     }
 }
 
-/// Registers a controller through its legacy default construction path when
-/// the controller implements `Default`. The reference-based implementations
-/// let generated code select this path without requiring every graph-managed
-/// controller to be default-constructible.
-pub trait DefaultControllerRegistration {
-    fn register_default_routes(self, router: Router) -> Router;
-}
-
-impl<T> DefaultControllerRegistration for std::marker::PhantomData<T> {
-    fn register_default_routes(self, router: Router) -> Router {
-        router
-    }
-}
-
-impl<T> DefaultControllerRegistration for &std::marker::PhantomData<T>
-where
-    T: ControllerRoutes + Default,
-{
-    fn register_default_routes(self, router: Router) -> Router {
-        T::register_routes(router)
-    }
-}
-
 /// Implemented by the controller attribute to make its URL prefix available
 /// to the generated route table without runtime reflection.
 pub trait ControllerPrefix {
