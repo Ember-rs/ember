@@ -121,7 +121,11 @@ fn request_timeout_loads_with_precedence_and_is_validated() {
         .override_value("server.timeout", "0")
         .load_validated::<ScafraConfig>()
         .expect_err("zero seconds cannot create a useful request deadline");
-    assert!(matches!(invalid, ConfigError::Validation(_)));
+    assert!(matches!(
+        invalid,
+        ConfigError::Validation(message)
+            if message.contains("server.request_timeout_seconds")
+    ));
 
     let invalid_model = ScafraConfig {
         server: ServerConfig {
@@ -216,14 +220,20 @@ fn validated_loader_keeps_derived_validation_errors_redacted() {
         .load_validated::<RequiredConfig>()
         .expect_err("default required values must fail before startup");
 
-    assert!(matches!(
-        &error,
-        ConfigError::Validation(message) if message == "validation failed"
-    ));
-    let text = error.to_string();
-    assert_eq!(text, "configuration validation failed");
-    assert!(!text.contains("configured-secret"));
-    assert!(!text.contains("must not be blank"));
+    assert_eq!(error.to_string(), "configuration validation failed");
+    let details = error
+        .validation_details()
+        .expect("derived validators should expose safe field details");
+    assert!(
+        details.contains("secret"),
+        "missing configuration key: {details}"
+    );
+    assert!(
+        details.contains("must not be blank"),
+        "missing reason: {details}"
+    );
+    assert!(!details.contains("configured-secret"));
+    assert_eq!(format!("{error:?}"), "Validation");
 }
 
 #[test]
@@ -231,10 +241,10 @@ fn invalid_derived_configuration_stops_before_context_and_router_construction() 
     let startup_reached = AtomicBool::new(false);
     let result = start_application_after_validation(&startup_reached);
 
-    assert!(matches!(
-        result,
-        Err(ConfigError::Validation(message)) if message == "validation failed"
-    ));
+    let error = result.expect_err("required configuration must fail before startup");
+    assert!(error
+        .validation_details()
+        .is_some_and(|details| details.contains("secret")));
     assert!(
         !startup_reached.load(Ordering::Acquire),
         "application startup must not construct context or router after validation fails"

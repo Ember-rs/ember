@@ -489,6 +489,37 @@ changes the listening port without changing source code. `RUST_LOG` remains an
 explicit advanced tracing-filter override; invalid directives fall back to the
 typed `logging.level` without echoing the directive.
 
+`SCAFRA_PROFILE` selects the profile before files are merged. It takes
+precedence over `scafra.profiles.active` in the base file; if neither is set,
+Scafra uses the `default` profile. Profile files are applied in YAML, YML, then
+properties order. Environment names after the `SCAFRA_` prefix map to
+lowercase dotted paths (`SCAFRA_SERVER_PORT` becomes `server.port`); matching
+variables are processed in sorted name order. `ConfigLoader::profile` selects
+a profile explicitly in application code, while `override_value` is the final
+per-key override for programmatic callers. Missing candidate files are
+optional, but unreadable, malformed, or incorrectly typed values fail loading.
+
+The standard runner loads and validates `ScafraConfig` before initializing
+logging, discovering application components, or binding the listener. A
+derived `Config` can mark `String` and `Option<T>` fields as required with
+`#[config(required)]`; blank strings and absent options then fail during
+`load_validated` or typed `Properties::load`. Built-in validation errors expose
+the configuration key and safe reason through `ConfigError::validation_details`;
+the general `Display` and `Debug` forms stay redacted. Errors from custom
+validators are redacted by default; a custom validator should expose details
+only when those details are known not to contain configured values. Startup
+logs report a bounded error category and never format arbitrary configuration
+errors.
+
+For development, keep safe defaults in `application.yaml`, use the `dev`
+profile for local-only settings, and pass secrets through environment
+variables. For tests, use `SCAFRA_PROFILE=test` or a test-specific
+`ConfigLoader::root` and `env_prefix`; restore process environment variables
+after each test. For production, select an explicit profile, inject secrets
+from the deployment environment or secret manager, and avoid committing secret
+values to configuration files. Scafra does not load `.env` files implicitly.
+Environment overrides are read from the process environment at load time.
+
 `server.timeout` (also `SCAFRA_SERVER_TIMEOUT`) sets an optional
 request-processing deadline in seconds. It must be greater than zero
 when set. When the deadline expires, Scafra cancels the in-flight request

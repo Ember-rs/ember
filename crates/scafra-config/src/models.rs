@@ -150,6 +150,10 @@ impl Config for ScafraConfig {
         }
         Ok(())
     }
+
+    fn validation_details(error: &Self::Error) -> Option<ValidationError> {
+        Some(error.clone())
+    }
 }
 
 fn default_host() -> String {

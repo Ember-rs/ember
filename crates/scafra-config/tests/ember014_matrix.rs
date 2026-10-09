@@ -76,6 +76,10 @@ impl Config for FixtureConfig {
     }
 }
 
+impl scafra_config::ConfigProperties for FixtureConfig {
+    const CONFIG_PREFIX: &'static str = "";
+}
+
 struct TempRoot(PathBuf);
 
 impl TempRoot {
@@ -223,6 +227,45 @@ fn invalid_environment_values_report_the_path_and_source_without_the_value() {
         !text.contains(secret_value),
         "secret value leaked in: {text}"
     );
+}
+
+#[cfg(unix)]
+#[test]
+fn non_unicode_environment_values_fail_without_panicking_or_echoing_values() {
+    use std::os::unix::ffi::OsStringExt;
+
+    let root = TempRoot::new();
+    let prefix = format!("SCAFRA014_NON_UTF8_{}", std::process::id());
+    let environment_key = format!("{prefix}_SERVER_PORT");
+    let previous = std::env::var_os(&environment_key);
+    std::env::set_var(
+        &environment_key,
+        std::ffi::OsString::from_vec(vec![0xff, 0xfe]),
+    );
+
+    let result = ConfigLoader::new()
+        .root(root.path())
+        .env_prefix(&prefix)
+        .load::<FixtureConfig>();
+
+    match previous {
+        Some(value) => std::env::set_var(&environment_key, value),
+        None => std::env::remove_var(&environment_key),
+    }
+
+    let error = result.expect_err("non-Unicode values must fail configuration loading");
+    assert!(matches!(
+        &error,
+        ConfigError::InvalidValue {
+            path,
+            source_kind
+        } if path == "server.port" && source_kind == "environment"
+    ));
+    assert_eq!(
+        error.to_string(),
+        "invalid configuration value for `server.port` from environment"
+    );
+    assert!(!format!("{error:?}").contains("ff"));
 }
 
 #[test]
@@ -458,4 +501,28 @@ fn validation_failures_are_redacted_before_startup() {
     let text = error.to_string();
     assert_eq!(text, "configuration validation failed");
     assert!(!text.contains("validation-secret-that-must-not-appear"));
+    assert!(!format!("{error:?}").contains("validation-secret-that-must-not-appear"));
+}
+
+#[test]
+fn properties_redact_arbitrary_validation_errors_in_display_and_debug() {
+    let root = TempRoot::new();
+    let error = scafra_config::Properties::<FixtureConfig>::with_loader(
+        ConfigLoader::new().root(root.path()),
+    )
+    .load()
+    .expect_err("invalid properties must fail before use");
+
+    assert_eq!(error.to_string(), "configuration validation failed");
+    assert!(!format!("{error:?}").contains("validation-secret-that-must-not-appear"));
+    assert_eq!(format!("{error:?}"), "Validation");
+}
+
+#[test]
+fn manually_constructed_validation_errors_stay_redacted_when_formatted() {
+    let secret = "manual-validation-secret";
+    let error = ConfigError::Validation(secret.to_owned());
+
+    assert_eq!(error.to_string(), "configuration validation failed");
+    assert_eq!(format!("{error:?}"), "Validation");
 }

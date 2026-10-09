@@ -31,6 +31,12 @@ pub(crate) fn expand_config(input: TokenStream) -> Result<proc_macro2::TokenStre
                 #(#validations)*
                 ::std::result::Result::Ok(())
             }
+
+            fn validation_details(
+                error: &Self::Error,
+            ) -> ::std::option::Option<::scafra::config::ValidationError> {
+                ::std::option::Option::Some(error.clone())
+            }
         }
 
         impl #ident {
