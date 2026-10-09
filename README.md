@@ -223,7 +223,22 @@ Use `endpoints: "*"` for all endpoints, or
 
 Metrics can be exposed with `metrics`, and actuator endpoints can be protected
 with `actuator.security.enabled=true` and a bearer token. Applications can
-register checks with `register_health_check!`. The readiness aliases `/ready`,
+register asynchronous checks with `register_health_check!`. Checks may perform
+asynchronous I/O and return `false` when a dependency is unhealthy. They must
+not block synchronously while being polled. Each selected check runs in order
+with a 1000 ms timeout by default; set `actuator.health.check_timeout_ms` to
+change the per-check timeout. A check that returns `false`, unwinds, or times out
+marks readiness and aggregate health `DOWN` (HTTP 503); unwinding panics are
+logged. With `panic=abort`, a panic terminates the process. A timeout drops the
+async future, but work detached by that future and external side effects cannot
+be cancelled or undone.
+A cancelled probe request also drops its in-flight check future.
+To migrate a synchronous check, make it an `async fn` and use asynchronous I/O;
+there is no safe way to interrupt an arbitrary blocking Rust function after it
+starts. If code constructs `HealthConfig` with a struct literal, add
+`..HealthConfig::default()` or set `check_timeout_ms` explicitly.
+
+The readiness aliases `/ready`,
 `/health/ready`, and `/actuator/health/readiness` evaluate the registered
 checks selected by `actuator.health.checks` (an empty list selects all); a
 selected check that fails returns `DOWN` with HTTP 503. The liveness aliases

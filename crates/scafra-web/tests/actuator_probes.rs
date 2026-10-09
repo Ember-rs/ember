@@ -3,15 +3,39 @@ use axum::{
     http::{Request, StatusCode},
 };
 use scafra_web::{build_router_with_actuator, ActuatorConfig, ActuatorSecurity, HealthConfig};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 use tower::util::ServiceExt;
 
-fn unavailable_dependency() -> bool {
+async fn unavailable_dependency() -> bool {
     false
+}
+
+static SLOW_CHECK_DROPPED: AtomicBool = AtomicBool::new(false);
+
+struct DropSignal;
+
+impl Drop for DropSignal {
+    fn drop(&mut self) {
+        SLOW_CHECK_DROPPED.store(true, Ordering::SeqCst);
+    }
+}
+
+async fn slow_dependency() -> bool {
+    let _drop_signal = DropSignal;
+    tokio::time::sleep(Duration::from_secs(60)).await;
+    true
+}
+
+async fn panicking_dependency() -> bool {
+    panic!("dependency check panicked");
 }
 
 // Keep this failing registration isolated in its own integration-test binary.
 // The inventory is immutable, so parallel tests all observe the same check.
 scafra_web::register_health_check!("dependency", unavailable_dependency);
+scafra_web::register_health_check!("slow-dependency", slow_dependency);
+scafra_web::register_health_check!("panicking-dependency", panicking_dependency);
 
 async fn get(config: &ActuatorConfig, path: &str) -> (StatusCode, String) {
     let response = build_router_with_actuator(config)
@@ -38,6 +62,7 @@ fn config_with_dependency_check() -> ActuatorConfig {
     ActuatorConfig {
         health: HealthConfig {
             checks: vec!["dependency".to_owned()],
+            ..HealthConfig::default()
         },
         ..ActuatorConfig::all()
     }
@@ -81,6 +106,7 @@ async fn readiness_respects_health_check_selection() {
     let config = ActuatorConfig {
         health: HealthConfig {
             checks: vec!["another-check".to_owned()],
+            ..HealthConfig::default()
         },
         ..ActuatorConfig::all()
     };
@@ -88,6 +114,40 @@ async fn readiness_respects_health_check_selection() {
     let (status, body) = get(&config, "/ready").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, r#"{"status":"UP"}"#);
+}
+
+#[tokio::test]
+async fn timed_out_check_marks_readiness_down_and_drops_its_future() {
+    SLOW_CHECK_DROPPED.store(false, Ordering::SeqCst);
+    let config = ActuatorConfig {
+        health: HealthConfig {
+            checks: vec!["slow-dependency".to_owned()],
+            check_timeout_ms: 20,
+        },
+        ..ActuatorConfig::all()
+    };
+
+    let (status, body) = tokio::time::timeout(Duration::from_secs(2), get(&config, "/ready"))
+        .await
+        .expect("the configured health-check timeout should bound the probe");
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(body, r#"{"status":"DOWN"}"#);
+    assert!(SLOW_CHECK_DROPPED.load(Ordering::SeqCst));
+}
+
+#[tokio::test]
+async fn panicking_check_marks_readiness_down() {
+    let config = ActuatorConfig {
+        health: HealthConfig {
+            checks: vec!["panicking-dependency".to_owned()],
+            ..HealthConfig::default()
+        },
+        ..ActuatorConfig::all()
+    };
+
+    let (status, body) = get(&config, "/ready").await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(body, r#"{"status":"DOWN"}"#);
 }
 
 #[tokio::test]

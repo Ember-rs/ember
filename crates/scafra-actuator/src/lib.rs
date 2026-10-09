@@ -8,6 +8,14 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use std::{
+    any::Any,
+    future::Future,
+    panic::{catch_unwind, AssertUnwindSafe},
+    pin::Pin,
+    task::{Context, Poll},
+    time::Duration,
+};
 
 /// Selects which built-in operational endpoint groups are installed.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -37,12 +45,33 @@ pub struct ActuatorConfig {
     pub security: ActuatorSecurity,
 }
 
-/// Controls which registered health checks are evaluated. An empty list means
-/// all registered checks.
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+/// Controls how registered health checks are evaluated.
+///
+/// An empty `checks` list means all statically registered checks. Each selected
+/// check runs sequentially and receives its own timeout. A timeout or a check
+/// returning `false` or unwinding while running marks readiness and aggregate
+/// health as down. Timed-out futures are dropped, which cancels cooperative
+/// async work.
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct HealthConfig {
     #[serde(default)]
     pub checks: Vec<String>,
+    /// Maximum time allowed for each check, in milliseconds. Defaults to 1000.
+    #[serde(default = "default_check_timeout_ms")]
+    pub check_timeout_ms: u64,
+}
+
+fn default_check_timeout_ms() -> u64 {
+    1000
+}
+
+impl Default for HealthConfig {
+    fn default() -> Self {
+        Self {
+            checks: Vec::new(),
+            check_timeout_ms: default_check_timeout_ms(),
+        }
+    }
 }
 
 /// Optional bearer-token protection for actuator endpoints.
@@ -54,22 +83,63 @@ pub struct ActuatorSecurity {
     pub bearer_token: Option<String>,
 }
 
+/// A statically registered asynchronous health check.
+///
+/// Checks may perform asynchronous I/O. They must not block while being polled;
+/// Tokio cannot preempt synchronous work inside a future. Return `false` for an
+/// unhealthy dependency. The configured timeout drops the future, but cannot
+/// undo external side effects or stop work that the future detached elsewhere.
+/// An unwinding panic while creating or polling the check is logged and treated
+/// as unhealthy. With `panic=abort`, the process terminates instead.
+pub type HealthCheckFuture = Pin<Box<dyn Future<Output = bool> + Send + 'static>>;
+
+struct CatchUnwind {
+    future: HealthCheckFuture,
+}
+
+impl Future for CatchUnwind {
+    type Output = Result<bool, Box<dyn Any + Send + 'static>>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        match catch_unwind(AssertUnwindSafe(|| this.future.as_mut().poll(cx))) {
+            Ok(Poll::Pending) => Poll::Pending,
+            Ok(Poll::Ready(healthy)) => Poll::Ready(Ok(healthy)),
+            Err(panic) => Poll::Ready(Err(panic)),
+        }
+    }
+}
+
 /// A health check supplied by an Scafra application or adapter.
 pub struct HealthCheckRegistration {
     pub name: &'static str,
-    pub check: fn() -> bool,
+    pub check: fn() -> HealthCheckFuture,
 }
 
 inventory::collect!(HealthCheckRegistration);
 
 pub use inventory;
 
-/// Registers a synchronous actuator health check.
+/// Registers an asynchronous actuator health check.
+///
+/// The check function must be an `async fn` returning `bool`; return `false`
+/// when the dependency is unhealthy. Each selected check is subject to
+/// [`HealthConfig::check_timeout_ms`].
+///
+/// ```ignore
+/// async fn database_is_available() -> bool {
+///     database.ping().await.is_ok()
+/// }
+/// scafra::register_health_check!("database", database_is_available);
+/// ```
 #[macro_export]
 macro_rules! register_health_check {
     ($name:literal, $check:path) => {
         $crate::inventory::submit! {
-            $crate::HealthCheckRegistration { name: $name, check: $check }
+            $crate::HealthCheckRegistration {
+                name: $name,
+                check: || Box::pin($check()),
+            }
         }
     };
 }
@@ -133,23 +203,49 @@ fn protected(headers: &HeaderMap, config: &ActuatorConfig) -> Option<Response> {
     (!authorized(headers, config)).then(|| StatusCode::UNAUTHORIZED.into_response())
 }
 
-fn health_up(config: &ActuatorConfig) -> bool {
-    inventory::iter::<HealthCheckRegistration>().all(|registration| {
-        config.health.checks.is_empty()
-            || !config
+async fn health_up(config: &ActuatorConfig) -> bool {
+    for registration in inventory::iter::<HealthCheckRegistration>() {
+        let selected = config.health.checks.is_empty()
+            || config
                 .health
                 .checks
                 .iter()
-                .any(|name| name != "*" && name == registration.name)
-            || (registration.check)()
-    })
+                .any(|name| name != "*" && name == registration.name);
+        if !selected {
+            continue;
+        }
+
+        // Async checks let timeout drop their work. A synchronous check moved
+        // to spawn_blocking could not be stopped and could exhaust that pool.
+        let future = match catch_unwind(AssertUnwindSafe(|| (registration.check)())) {
+            Ok(future) => future,
+            Err(_) => {
+                tracing::error!(health_check = registration.name, "health check panicked");
+                return false;
+            }
+        };
+        let result = tokio::time::timeout(
+            Duration::from_millis(config.health.check_timeout_ms),
+            CatchUnwind { future },
+        )
+        .await;
+        match result {
+            Ok(Ok(true)) => {}
+            Ok(Err(_)) => {
+                tracing::error!(health_check = registration.name, "health check panicked");
+                return false;
+            }
+            Ok(Ok(false)) | Err(_) => return false,
+        }
+    }
+    true
 }
 
 async fn health(headers: HeaderMap, Extension(config): Extension<ActuatorConfig>) -> Response {
     if let Some(response) = protected(&headers, &config) {
         return response;
     }
-    health_response(health_up(&config))
+    health_response(health_up(&config).await)
 }
 
 async fn liveness(headers: HeaderMap, Extension(config): Extension<ActuatorConfig>) -> Response {
@@ -163,7 +259,7 @@ async fn readiness(headers: HeaderMap, Extension(config): Extension<ActuatorConf
     if let Some(response) = protected(&headers, &config) {
         return response;
     }
-    health_response(health_up(&config))
+    health_response(health_up(&config).await)
 }
 
 fn health_response(up: bool) -> Response {
