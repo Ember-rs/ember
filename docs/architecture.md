@@ -18,18 +18,26 @@ typed components
 
 ```mermaid
 flowchart TD
-    A[Application source] --> B[Procedural macros]
-    B --> D[Typed component metadata]
-    B --> E[Generated module tree]
-    D --> F[Static route descriptors]
-    E --> F
-    F --> G[Axum router]
-    H[Configuration] --> I[Standard runner]
-    I --> G
-    G --> J[Tokio server]
-    I --> J
-    K[Optional build.rs] -.-> L[Typed dependency graph]
+    A[Application source] --> B["#[scafra::main] macro expansion"]
+    B --> C[Generated modules, typed graph, and route registrations]
+    C --> D[Standard startup constructs graph]
+    D --> E[Axum router]
+    F[Configuration] --> D
+    E --> G[Tokio server]
+    D --> G
+
+    A -. custom build pipeline .-> H[Application-owned build.rs]
+    H --> I[scafra_build::discover_graph]
+    I --> J[Generated graph artifact]
 ```
+
+The upper path is the standard `#[scafra::main]` flow: the macro discovers
+application components and generates the typed graph during compilation, then
+the generated graph constructs component instances during startup. The lower
+path is optional and lets an application-owned build pipeline generate a graph
+artifact with `scafra_build::discover_graph`. See the
+[typed dependency graph guide](guides/dependency-graph.md) for graph behavior
+and supported declarations.
 
 ## Workspace boundaries
 
@@ -58,16 +66,18 @@ flowchart LR
 
 ## Compile-time composition
 
-Scafra uses procedural macros to discover application modules and generate typed
-registrations during compilation. The standard startup path calls generated
-constructors directly, so injected dependencies do not need `Default`. Shared
-dependencies use explicit `Arc<T>` fields. A missing dependency is a compiler
-error rather than a late runtime lookup failure.
+Scafra's standard `#[scafra::main]` path discovers application components and
+generates the typed dependency graph during compilation. Generated constructors
+compose the graph during startup, so injected dependencies do not need
+`Default`. Shared dependencies use explicit `Arc<T>` fields. A missing
+dependency is diagnosed at compile time rather than through a late runtime
+lookup.
 
-The default path uses static route descriptors. It does not perform runtime
-filesystem scanning, reflection-based discovery, or string-key service lookup.
-The separate `scafra_build::discover_graph` function is opt-in and requires an
-application-owned build script.
+The standard path uses static route descriptors. Scafra does not use runtime
+filesystem scanning, reflection, or a global service locator. The separate
+`scafra_build::discover_graph` API remains available when an application owns a
+custom build pipeline; see the
+[typed dependency graph guide](guides/dependency-graph.md).
 
 ## Runtime responsibilities
 
@@ -81,6 +91,6 @@ responsibilities to the application.
 
 The current implementation includes the HTTP path, project generation,
 configuration, logging, optional operational endpoints, security options, and
-scheduling. The typed graph is available through the opt-in
-`scafra_build::discover_graph` build-script function; the standard starter does
-not enable it automatically.
+scheduling. The standard starter uses `#[scafra::main]`; the
+[typed dependency graph guide](guides/dependency-graph.md) covers its generated
+graph and the optional custom build-script route.

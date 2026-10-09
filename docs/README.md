@@ -12,8 +12,8 @@ Axum, Tokio, Tower, Serde, and `tracing`.
   model, and design boundaries.
 - [Generated code](generated-code.md) — see what `scafra new` creates and how
   source discovery works.
-- [Dependency graph guide](guides/dependency-graph.md) — use the opt-in typed
-  build-time graph.
+- [Dependency graph guide](guides/dependency-graph.md) — understand the typed
+  graph used by standard startup and the custom build-script route.
 - [Publishing](publishing.md) — configure and trigger a crates.io release.
 - [Contributing](contributing.md) — build the workspace and make a focused
   contribution.
