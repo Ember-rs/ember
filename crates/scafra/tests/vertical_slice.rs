@@ -6,6 +6,7 @@ use scafra::prelude::*;
 use tower::util::ServiceExt;
 
 #[service]
+#[derive(Default)]
 struct GreetingService;
 
 impl GreetingService {
@@ -15,11 +16,12 @@ impl GreetingService {
 }
 
 #[controller("/test")]
+#[derive(Default)]
 struct GreetingController {
     service: GreetingService,
 }
 
-#[routes]
+#[routes(default)]
 impl GreetingController {
     #[get("/hello/{name}")]
     async fn hello(&self, name: Path<String>) -> String {

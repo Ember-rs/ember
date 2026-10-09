@@ -27,19 +27,17 @@ pub(crate) fn expand_controller(
         }
     };
     let (parameters, construction) = crate::parse::constructor_parts(data)?;
-    let default_construction = crate::parse::default_construction(data);
-    let default_impl = if crate::parse::has_default_derive(&input.attrs) {
-        quote! {}
-    } else {
+    let default_impl = if matches!(data.fields, syn::Fields::Unit)
+        && !crate::parse::has_default_derive(&input.attrs)
+    {
         quote! {
             impl ::std::default::Default for #ident {
-                fn default() -> Self {
-                    #default_construction
-                }
+                fn default() -> Self { Self }
             }
         }
+    } else {
+        quote! {}
     };
-
     Ok(quote! {
         #input
 
@@ -53,6 +51,9 @@ pub(crate) fn expand_controller(
             }
         }
 
+        // Keep the legacy route builder available for controllers whose
+        // fields can still be constructed with `Default`. Dependency-bearing
+        // controllers remain constructible through the typed graph alone.
         #default_impl
 
         ::scafra::core::__private::inventory::submit! {

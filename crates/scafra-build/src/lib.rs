@@ -45,6 +45,33 @@ pub fn discover_graph(source_root: impl AsRef<Path>) -> io::Result<()> {
     fs::write(context.output_dir().join(GENERATED_MODULES_PATH), generated)
 }
 
+/// Renders the typed graph for an application source tree. This is also used
+/// by `#[scafra::main]` so ordinary applications do not need a build script.
+pub fn render_application_graph(
+    source_root: impl AsRef<Path>,
+    manifest_dir: impl AsRef<Path>,
+) -> io::Result<String> {
+    let source_root = source_root.as_ref();
+    let manifest_dir = manifest_dir.as_ref();
+    let mut files = Vec::new();
+    if source_root.exists() {
+        collect_source_files(source_root, &mut Vec::new(), manifest_dir, &mut files)?;
+    }
+    let graph = parser::parse_application_graph(&files)?;
+    let mut generated = String::new();
+    match graph {
+        Ok(model) => render_graph(&model, &mut generated),
+        Err(errors) => {
+            for error in errors {
+                generated.push_str("compile_error!(");
+                generated.push_str(&format!("{:?}", error));
+                generated.push_str(");\n");
+            }
+        }
+    }
+    Ok(generated)
+}
+
 /// Discovers source modules, stages the generated module artifact, and runs
 /// explicit build-time extensions before committing all artifacts.
 pub fn discover_with_extensions(

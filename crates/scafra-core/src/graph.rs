@@ -10,6 +10,7 @@ pub enum GraphNodeKind {
     Service,
     Component,
     Repository,
+    Controller,
 }
 
 /// Static metadata for one typed graph provider.
@@ -87,7 +88,6 @@ impl<'a> GraphPlan<'a> {
         let mut dependents = vec![Vec::<usize>::new(); descriptor.nodes.len()];
         let mut edges = descriptor.edges.iter().collect::<Vec<_>>();
         edges.sort_by_key(|edge| (edge.consumer, edge.dependency, edge.source));
-        let mut owned_dependencies = BTreeMap::<&'static str, (&'static str, &'static str)>::new();
         for edge in edges {
             let Some(&consumer) = nodes.get(edge.consumer) else {
                 return Err(GraphError::UnknownConsumer {
@@ -103,16 +103,6 @@ impl<'a> GraphPlan<'a> {
                     source: edge.source,
                 });
             };
-            if let Some(&(first_consumer, first_source)) = owned_dependencies.get(edge.dependency) {
-                return Err(GraphError::OwnedDependency {
-                    dependency: edge.dependency,
-                    first_consumer,
-                    first_source,
-                    second_consumer: edge.consumer,
-                    second_source: edge.source,
-                });
-            }
-            owned_dependencies.insert(edge.dependency, (edge.consumer, edge.source));
             dependencies[consumer] += 1;
             dependents[dependency].push(consumer);
         }

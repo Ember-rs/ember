@@ -6,6 +6,7 @@ use std::{
 };
 
 use super::*;
+use scafra_core::GraphNodeKind;
 
 #[test]
 fn sanitizes_file_names_into_rust_identifiers() {
@@ -20,6 +21,7 @@ fn graph_order_is_deterministic_and_reports_invalid_edges() {
         consumer: "Consumer".to_owned(),
         dependency: "Dependency".to_owned(),
         source: "src/service.rs:1".to_owned(),
+        shared: false,
     }];
     assert_eq!(graph_order(&names, &edges).unwrap(), vec![1, 0]);
 
@@ -29,6 +31,7 @@ fn graph_order_is_deterministic_and_reports_invalid_edges() {
             consumer: "Consumer".to_owned(),
             dependency: "Missing".to_owned(),
             source: "src/service.rs:1".to_owned(),
+            shared: false,
         }],
     )
     .unwrap_err();
@@ -41,11 +44,13 @@ fn graph_order_is_deterministic_and_reports_invalid_edges() {
                 consumer: "A".to_owned(),
                 dependency: "B".to_owned(),
                 source: "a.rs:1".to_owned(),
+                shared: false,
             },
             GraphEdge {
                 consumer: "B".to_owned(),
                 dependency: "A".to_owned(),
                 source: "b.rs:1".to_owned(),
+                shared: false,
             },
         ],
     )
@@ -61,6 +66,7 @@ fn graph_order_reports_unknown_consumers_and_owned_graph_conflicts() {
             consumer: "MissingConsumer".to_owned(),
             dependency: "Consumer".to_owned(),
             source: "src/missing.rs:7".to_owned(),
+            shared: false,
         }],
     )
     .unwrap_err();
@@ -74,11 +80,13 @@ fn graph_order_reports_unknown_consumers_and_owned_graph_conflicts() {
                 consumer: "A".to_owned(),
                 dependency: "Root".to_owned(),
                 source: "src/a.rs:1".to_owned(),
+                shared: false,
             },
             GraphEdge {
                 consumer: "B".to_owned(),
                 dependency: "Root".to_owned(),
                 source: "src/b.rs:1".to_owned(),
+                shared: false,
             },
         ],
     )
@@ -94,11 +102,13 @@ fn graph_order_reports_unknown_consumers_and_owned_graph_conflicts() {
                 consumer: "Consumer".to_owned(),
                 dependency: "Dependency".to_owned(),
                 source: "src/one.rs:1".to_owned(),
+                shared: false,
             },
             GraphEdge {
                 consumer: "Consumer".to_owned(),
                 dependency: "Dependency".to_owned(),
                 source: "src/two.rs:2".to_owned(),
+                shared: false,
             },
         ],
     )
@@ -132,6 +142,7 @@ fn graph_order_is_stable_for_disconnected_and_deep_graphs() {
             consumer: names[index].clone(),
             dependency: names[index - 1].clone(),
             source: format!("src/node{index}.rs:1"),
+            shared: false,
         })
         .collect::<Vec<_>>();
     let order = graph_order(&names, &edges).unwrap();
@@ -152,6 +163,7 @@ fn graph_order_handles_a_medium_chain_within_the_startup_budget() {
             consumer: names[index].clone(),
             dependency: names[index - 1].clone(),
             source: "src/generated.rs:1".to_owned(),
+            shared: false,
         })
         .collect::<Vec<_>>();
 
@@ -254,6 +266,7 @@ fn bounded_adversarial_graph_inputs_remain_deterministic() {
             consumer: "Node0001".to_owned(),
             dependency: "Node0000".to_owned(),
             source: format!("src/duplicate{index}.rs:1"),
+            shared: false,
         })
         .collect::<Vec<_>>();
     let duplicate_errors = graph_order(
@@ -272,16 +285,19 @@ fn bounded_adversarial_graph_inputs_remain_deterministic() {
                 consumer: "A".to_owned(),
                 dependency: "B".to_owned(),
                 source: "src/cycle_a.rs:3".to_owned(),
+                shared: false,
             },
             GraphEdge {
                 consumer: "B".to_owned(),
                 dependency: "C".to_owned(),
                 source: "src/cycle_b.rs:4".to_owned(),
+                shared: false,
             },
             GraphEdge {
                 consumer: "C".to_owned(),
                 dependency: "A".to_owned(),
                 source: "src/cycle_c.rs:5".to_owned(),
+                shared: false,
             },
         ],
     )
@@ -345,6 +361,7 @@ fn graph_order_exhaustively_checks_small_owned_graphs() {
                     consumer: names[*consumer].clone(),
                     dependency: names[*dependency].clone(),
                     source: format!("src/{consumer}_{dependency}.rs:1"),
+                    shared: false,
                 })
             })
             .collect::<Vec<_>>();
@@ -674,6 +691,73 @@ fn rendered_graph_contains_typed_calls_and_provider_context() {
     assert!(generated.contains("crate::providers::suffix(node_0)"));
     assert!(generated.contains("GraphPhase::Construction"));
     assert!(generated.contains("src/providers.rs:8"));
+}
+
+#[test]
+fn rendered_graph_composes_services_into_injected_controllers() {
+    let syntax = syn::parse_file(
+        r#"
+            pub struct Greeting;
+            #[bean]
+            pub fn greeting() -> Greeting { Greeting }
+            #[service]
+            pub struct GreetingService { greeting: Greeting }
+            #[controller("/hello")]
+            pub struct GreetingController { service: GreetingService }
+        "#,
+    )
+    .unwrap();
+    let file = SourceFile {
+        module_path: vec!["app".to_owned()],
+        source_label: "src/main/app.rs".to_owned(),
+        syntax,
+    };
+    let graph = parse_graph(&[file]).unwrap().unwrap();
+    assert!(graph
+        .nodes
+        .iter()
+        .any(|node| node.kind == GraphNodeKind::Controller));
+    let mut generated = String::new();
+    render_graph(&graph, &mut generated);
+    assert!(generated.contains("crate::app::GreetingService::new(node_"));
+    assert!(generated.contains("__scafra_register_routes_with(router, self.node_"));
+    assert!(generated.contains("ControllerRoutes>::route_metadata()"));
+}
+
+#[test]
+fn rendered_graph_shares_arc_dependencies_and_supports_non_default_consumers() {
+    let syntax = syn::parse_file(
+        r#"
+            use std::sync::Arc;
+            pub struct Shared;
+            #[bean]
+            pub fn shared() -> Shared { Shared }
+            #[service]
+            pub struct First { shared: Arc<Shared> }
+            #[controller("/")]
+            pub struct FirstController { service: Arc<First> }
+            #[controller("/")]
+            pub struct SecondController { service: Arc<First> }
+        "#,
+    )
+    .unwrap();
+    let file = SourceFile {
+        module_path: vec!["app".to_owned()],
+        source_label: "src/main/app.rs".to_owned(),
+        syntax,
+    };
+    let graph = parse_graph(&[file]).unwrap().unwrap();
+    assert!(graph
+        .edges
+        .iter()
+        .filter(|edge| edge.dependency == "First")
+        .all(|edge| edge.shared));
+    let mut generated = String::new();
+    render_graph(&graph, &mut generated);
+    assert!(generated.contains("Arc<crate::app::First>"));
+    assert!(generated.contains("::std::sync::Arc::new(crate::app::First::new(node_3.clone()))"));
+    assert!(generated.contains("FirstController::new(node_0.clone())"));
+    assert!(generated.contains("__scafra_register_routes_with(router, self.node_"));
 }
 
 struct TestBuildExtension {

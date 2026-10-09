@@ -23,7 +23,9 @@ pub use errors::{AppError, ServerError, WebError};
 pub use json::JsonBody;
 pub use registration::{ControllerPrefix, ControllerRegistration, ControllerRoutes, RouteMetadata};
 pub use routing::{
-    build_router, build_router_with_actuator, build_router_with_actuator_and_security, join_paths,
+    build_router, build_router_with_actuator, build_router_with_actuator_and_security,
+    default_controller_metadata, finish_router, join_paths, register_default_controllers,
+    validate_routes,
 };
 pub use scafra_actuator::register_health_check;
 pub use scafra_actuator::{ActuatorConfig, ActuatorSecurity, EndpointSelection, HealthConfig};
@@ -32,7 +34,8 @@ pub use server::{
     run, run_on, run_on_with_log_level, serve_on, serve_on_with_actuator, serve_on_with_policy,
     serve_on_with_policy_and_actuator, serve_on_with_policy_and_actuator_and_security,
     serve_on_with_policy_and_actuator_and_security_and_request_timeout, serve_on_with_shutdown,
-    shutdown_channel, ServerOutcome, ShutdownFuture, ShutdownHandle, ShutdownRequestError,
+    serve_router_on_with_policy_and_actuator_and_security_and_request_timeout, shutdown_channel,
+    ServerOutcome, ShutdownFuture, ShutdownHandle, ShutdownRequestError,
 };
 
 #[cfg(test)]

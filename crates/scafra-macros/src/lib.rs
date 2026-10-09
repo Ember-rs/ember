@@ -53,7 +53,7 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn routes(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    diagnostics::into_token_stream(routes::expand_routes(item))
+    diagnostics::into_token_stream(routes::expand_routes(_attr, item))
 }
 
 #[proc_macro_attribute]
@@ -105,6 +105,8 @@ mod tests {
             .to_string();
 
         assert!(expanded.contains("log_startup_failure"));
+        assert!(expanded.contains("run_with_router"));
+        assert!(expanded.contains("__scafra_graph :: compose"));
         assert!(!expanded.contains("% error"));
         assert!(!expanded.contains("Scafra application failed"));
     }

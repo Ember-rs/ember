@@ -33,9 +33,12 @@ during compilation and emits the module declarations needed by the application.
 New Rust files under `src/main/` can therefore participate without manually
 adding every `mod` declaration to `main.rs`.
 
-Applications that opt into the typed dependency graph can add an application-
-owned `build.rs` and call `scafra_build::discover_graph("src/main")`. That is a
-separate path from the default starter.
+The same macro generates the typed dependency graph from these source files.
+During standard startup, graph providers are constructed in dependency order
+and controller instances are registered with their routes. An application can
+also add an application-owned `build.rs` and call
+`scafra_build::discover_graph("src/main")` when it needs the generated graph
+artifact in a custom build pipeline.
 
 The generated files remain normal Rust code. Visibility, imports, compiler
 diagnostics, and application ownership are still explicit.

@@ -8,9 +8,22 @@ use syn::{
 
 use crate::{
     graph::graph_order,
-    model::{GraphEdge, GraphModel, GraphNode, SourceFile, TypeDeclaration},
+    model::{GraphDependency, GraphEdge, GraphModel, GraphNode, SourceFile, TypeDeclaration},
 };
 pub(crate) fn parse_graph(files: &[SourceFile]) -> io::Result<Result<GraphModel, Vec<String>>> {
+    parse_graph_inner(files, false)
+}
+
+pub(crate) fn parse_application_graph(
+    files: &[SourceFile],
+) -> io::Result<Result<GraphModel, Vec<String>>> {
+    parse_graph_inner(files, true)
+}
+
+fn parse_graph_inner(
+    files: &[SourceFile],
+    skip_private: bool,
+) -> io::Result<Result<GraphModel, Vec<String>>> {
     let mut type_paths = BTreeMap::<String, Vec<TypeDeclaration>>::new();
     for file in files {
         for item in &file.syntax.items {
@@ -38,8 +51,10 @@ pub(crate) fn parse_graph(files: &[SourceFile]) -> io::Result<Result<GraphModel,
         for item in &file.syntax.items {
             let source = declaration_source(&file.source_label, item);
             let result = match item {
-                Item::Struct(item) => parse_struct_node(item, file, &source, &type_paths),
-                Item::Fn(item) => parse_bean_node(item, file, &source, &type_paths),
+                Item::Struct(item) => {
+                    parse_struct_node(item, file, &source, &type_paths, skip_private)
+                }
+                Item::Fn(item) => parse_bean_node(item, file, &source, &type_paths, skip_private),
                 _ => Ok(None),
             };
             match result {
@@ -80,8 +95,9 @@ pub(crate) fn parse_graph(files: &[SourceFile]) -> io::Result<Result<GraphModel,
         for dependency in &node.dependencies {
             edges.push(GraphEdge {
                 consumer: node.output.clone(),
-                dependency: dependency.clone(),
+                dependency: dependency.output.clone(),
                 source: node.source.clone(),
+                shared: dependency.shared,
             });
         }
     }
@@ -125,11 +141,15 @@ fn parse_struct_node(
     file: &SourceFile,
     source: &str,
     type_paths: &BTreeMap<String, Vec<TypeDeclaration>>,
+    skip_private: bool,
 ) -> Result<Option<GraphNode>, String> {
     let Some(kind) = graph_kind(&item.attrs) else {
         return Ok(None);
     };
     if !is_public(&item.vis) {
+        if skip_private {
+            return Ok(None);
+        }
         return Err(format!(
             "Scafra graph declaration `{}` at {source} must be public so generated composition can call it",
             item.ident
@@ -171,11 +191,15 @@ fn parse_bean_node(
     file: &SourceFile,
     source: &str,
     type_paths: &BTreeMap<String, Vec<TypeDeclaration>>,
+    skip_private: bool,
 ) -> Result<Option<GraphNode>, String> {
     if !has_graph_attribute(&item.attrs, "bean") {
         return Ok(None);
     }
     if !is_public(&item.vis) {
+        if skip_private {
+            return Ok(None);
+        }
         return Err(format!(
             "Scafra graph bean `{}` at {source} must be public so generated composition can call it",
             item.sig.ident
@@ -246,6 +270,7 @@ fn graph_kind(attributes: &[Attribute]) -> Option<GraphNodeKind> {
         ("service", GraphNodeKind::Service),
         ("component", GraphNodeKind::Component),
         ("repository", GraphNodeKind::Repository),
+        ("controller", GraphNodeKind::Controller),
     ]
     .into_iter()
     .find_map(|(name, kind)| has_graph_attribute(attributes, name).then_some(kind))
@@ -295,15 +320,59 @@ fn graph_dependency_name(
     type_paths: &BTreeMap<String, Vec<TypeDeclaration>>,
     declaration: &str,
     source: &str,
-) -> Result<String, String> {
-    let name = dependency_name(ty).map_err(|error| format!("{error} at {source}"))?;
+) -> Result<GraphDependency, String> {
+    let (name, shared) = match ty {
+        Type::Path(path) if path.qself.is_none() => {
+            let Some(segment) = path.path.segments.last() else {
+                return Err(format!(
+                    "graph dependency must name a concrete type at {source}"
+                ));
+            };
+            if segment.ident == "Arc" {
+                let PathArguments::AngleBracketed(arguments) = &segment.arguments else {
+                    return Err(format!(
+                        "shared graph dependencies must use `Arc<T>` at {source}"
+                    ));
+                };
+                if arguments.args.len() != 1 {
+                    return Err(format!(
+                        "shared graph dependencies must use `Arc<T>` at {source}"
+                    ));
+                }
+                let Some(syn::GenericArgument::Type(inner)) = arguments.args.first() else {
+                    return Err(format!(
+                        "shared graph dependencies must use `Arc<T>` at {source}"
+                    ));
+                };
+                (
+                    dependency_name(inner).map_err(|error| format!("{error} at {source}"))?,
+                    true,
+                )
+            } else {
+                (
+                    dependency_name(ty).map_err(|error| format!("{error} at {source}"))?,
+                    false,
+                )
+            }
+        }
+        _ => (
+            dependency_name(ty).map_err(|error| format!("{error} at {source}"))?,
+            false,
+        ),
+    };
     let Some(candidates) = type_paths.get(&name) else {
-        return Ok(name);
+        return Ok(GraphDependency {
+            output: name,
+            shared,
+        });
     };
     if candidates.len() > 1 {
         return Err(ambiguous_type_error(name, declaration, source, candidates));
     }
-    Ok(name)
+    Ok(GraphDependency {
+        output: name,
+        shared,
+    })
 }
 
 fn bean_output(return_type: &ReturnType) -> Result<(String, bool), String> {

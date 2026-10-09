@@ -152,16 +152,15 @@ impl GreetingController {
 async fn main() {}
 ~~~
 
-'#[service]' generates a typed constructor and a 'Default' implementation that
-constructs fields with 'Default::default()'. A missing dependency constructor
-is therefore a normal compile error. '#[bean]' turns a concrete provider
-function into the typed default for its return type, so services can depend on
-beans without looking them up by string. '#[routes]' generates ordinary Axum
-handler adapters. The default path uses link-time static route descriptors to
-support the empty application entry point; it does not provide a runtime
-service locator or reflection-based scanning. Applications that need explicit
-multi-file provider wiring can opt into the build-time typed graph with
-`scafra_build::discover_graph`; see the [typed graph guide](docs/guides/dependency-graph.md).
+'#[service]' generates a typed constructor. With '#[scafra::main]', Scafra
+composes services, beans, and controllers through the typed graph before
+starting the server. Components do not need 'Default' for constructor
+injection; add '#[derive(Default)]' when direct default construction is needed.
+'#[bean]' turns a concrete provider function into a typed provider, and
+'#[routes]' generates ordinary Axum handler adapters. Applications can still
+use 'scafra_build::discover_graph' for an application-owned build pipeline;
+see the [typed graph guide](docs/guides/dependency-graph.md). Runtime
+reflection and a global service locator are not used.
 
 ## Create an application
 
@@ -356,8 +355,10 @@ module; the other starters do not create that directory.
 '#[scafra::main]' discovers the module tree during compilation, so new Rust files
 under 'src/main/' participate without adding manual 'mod' declarations to
 'main.rs'. Rust visibility and imports remain normal and explicit inside those
-files. Applications that opt into the typed graph can use
-'scafra_build::discover_graph' from an application-owned 'build.rs'.
+files. Public graph providers and their dependencies are resolved at startup
+through typed constructors. Existing components outside the graph continue to
+use their registered default construction path. Applications with an
+application-owned build pipeline can also use 'scafra_build::discover_graph'.
 
 The CLI writes fixed, inspectable files: a Cargo manifest, configuration
 defaults under `src/resources/`, a `#[scafra::main]` entry point, standard
@@ -413,9 +414,9 @@ current starter contract. Replacing `#[scafra::main]` transfers configuration,
 startup, and graceful-shutdown ownership to the application; `build_router()`
 only builds the router and does not perform that orchestration.
 
-Starter generation is current. The opt-in generated typed graph is also
-current, but it is not enabled by the starter templates and does not inject
-values into controllers or `scafra::run`.
+Starter generation and typed startup composition are current. The standard
+'#[scafra::main]' path constructs controllers with their injected services and
+beans before serving routes.
 Runtime filesystem scanning, reflection-based discovery, a global mutable
 container, and string-key dependency lookup are **Rejected for now** as the
 primary architecture.

@@ -44,17 +44,17 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="feat(web): add configurable request processing timeout" />
+    <list default="true" id="69684049-dde4-4332-b279-5a57ecfc4eb5" name="Changes" comment="&#10;Liveness endpoints now return `UP` without evaluating registered health checks. Readiness and aggregate health endpoints continue to evaluate configured checks. Add router tests for aliases, filtering, aggregate behavior, and bearer authentication. Update README probe documentation." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:bench" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="19-add-configurable-request-timeouts-and-resource-protection" />
+        <entry key="$PROJECT_DIR$" value="31-separate-liveness-and-readiness-actuator-checks" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -94,8 +94,8 @@
     "RunOnceActivity.rust.reset.selective.auto.import": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "#24 on 10-implement-atomic-cli-project-generation",
-    "git.auto.fetch.suggestion.counter": "2",
+    "git-widget-placeholder": "main",
+    "git.auto.fetch.suggestion.counter": "3",
     "last_opened_file_path": "/home/steffenp/workspace/ember-rs/ember-test-services",
     "nodejs_package_manager_path": "npm",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
@@ -109,7 +109,7 @@
       <command value="cargo bench" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.bench">
+  <component name="RunManager" selected="Cargo.build">
     <configuration name="bench" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="bench" />
       <option name="command" value="bench" />
@@ -147,6 +147,7 @@
       </method>
     </configuration>
     <configuration name="build" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="buildProfileId" value="dev" />
       <option name="command" value="build" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
@@ -167,9 +168,9 @@
       <list>
         <item itemvalue="Cargo.build [ember]" />
         <item itemvalue="Cargo.build" />
-        <item itemvalue="Cargo.bench" />
-        <item itemvalue="Cargo.bench" />
+        <item itemvalue="Cargo.build [ember]" />
         <item itemvalue="Cargo.build" />
+        <item itemvalue="Cargo.bench" />
       </list>
     </recent_temporary>
   </component>
@@ -196,6 +197,12 @@
     <MESSAGE value="fix version error in file system" />
     <MESSAGE value="Remove unused destination reservation code" />
     <MESSAGE value="feat(web): add configurable request processing timeout" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(web): add configurable request processing timeout" />
+    <MESSAGE value="Fix race when publishing generated projects" />
+    <MESSAGE value="Fix staging cleanup and unsupported platform fallback" />
+    <MESSAGE value=" cover application and HTTP server lifecycle" />
+    <MESSAGE value="synchronize graceful shutdown integration test" />
+    <MESSAGE value="synchronize graceful drain before releasing requests" />
+    <MESSAGE value="&#10;Liveness endpoints now return `UP` without evaluating registered health checks. Readiness and aggregate health endpoints continue to evaluate configured checks. Add router tests for aliases, filtering, aggregate behavior, and bearer authentication. Update README probe documentation." />
+    <option name="LAST_COMMIT_MESSAGE" value="&#10;Liveness endpoints now return `UP` without evaluating registered health checks. Readiness and aggregate health endpoints continue to evaluate configured checks. Add router tests for aliases, filtering, aggregate behavior, and bearer authentication. Update README probe documentation." />
   </component>
 </project>

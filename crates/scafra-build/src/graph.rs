@@ -34,26 +34,32 @@ pub(crate) fn graph_order(
         dependency_count[consumer] += 1;
         dependents[dependency].push(consumer);
     }
-    let mut consumers_by_dependency = BTreeMap::<usize, BTreeSet<usize>>::new();
+    let mut consumers_by_dependency = BTreeMap::<usize, Vec<&GraphEdge>>::new();
     for edge in edges {
-        let (Some(&consumer), Some(&dependency)) =
+        let (Some(_), Some(&dependency)) =
             (indices.get(&edge.consumer), indices.get(&edge.dependency))
         else {
             continue;
         };
         let consumers = consumers_by_dependency.entry(dependency).or_default();
-        if !consumers.insert(consumer) {
+        if !consumers.is_empty()
+            && (!edge.shared || consumers.iter().any(|previous| !previous.shared))
+        {
+            errors.push(format!(
+                "Scafra graph dependency `{}` has multiple consumers; declare the dependency as `Arc<{}>` at each consumer to share it",
+                edge.dependency, edge.dependency
+            ));
+        }
+        if consumers
+            .iter()
+            .any(|previous| previous.consumer == edge.consumer)
+        {
             errors.push(format!(
                 "Scafra graph dependency `{}` is consumed more than once by `{}` at {}",
                 edge.dependency, edge.consumer, edge.source
             ));
         }
-        if consumers.len() > 1 {
-            errors.push(format!(
-                "Scafra graph dependency `{}` has multiple consumers; owned graph values must have one consumer at {}",
-                edge.dependency, edge.source
-            ));
-        }
+        consumers.push(edge);
     }
     if !errors.is_empty() {
         return Err(errors);

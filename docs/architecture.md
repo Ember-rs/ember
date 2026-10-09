@@ -59,9 +59,10 @@ flowchart LR
 ## Compile-time composition
 
 Scafra uses procedural macros to discover application modules and generate typed
-registrations during compilation. Constructors use Rust types and
-`Default`-based dependency construction where supported. A missing dependency
-is therefore a compiler error rather than a late runtime lookup failure.
+registrations during compilation. The standard startup path calls generated
+constructors directly, so injected dependencies do not need `Default`. Shared
+dependencies use explicit `Arc<T>` fields. A missing dependency is a compiler
+error rather than a late runtime lookup failure.
 
 The default path uses static route descriptors. It does not perform runtime
 filesystem scanning, reflection-based discovery, or string-key service lookup.

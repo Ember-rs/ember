@@ -3,7 +3,22 @@ use proc_macro2::Span;
 use quote::{format_ident, quote};
 use syn::{Attribute, Error, FnArg, ItemImpl, LitStr, Result, Type};
 
-pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStream> {
+pub(crate) fn expand_routes(
+    attr: TokenStream,
+    item: TokenStream,
+) -> Result<proc_macro2::TokenStream> {
+    let default_routes = if attr.is_empty() {
+        false
+    } else {
+        let mode = syn::parse::<syn::Ident>(attr)?;
+        if mode != "default" {
+            return Err(Error::new_spanned(
+                mode,
+                "routes only accepts the `default` mode",
+            ));
+        }
+        true
+    };
     let mut input = syn::parse::<ItemImpl>(item)?;
     if input.trait_.is_some() {
         return Err(Error::new_spanned(
@@ -126,20 +141,39 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
     }
 
     let metadata_ident = format_ident!("__SCAFRA_{}_ROUTES", controller);
+    let register_ident = format_ident!("__scafra_register_default_{}", controller);
+    let default_registration = if default_routes {
+        quote!(<#controller as ::scafra::web::ControllerRoutes>::register_routes(router))
+    } else {
+        quote!(router)
+    };
     Ok(quote! {
         #input
 
         impl #controller {
             #(#handlers)*
+
+            #[doc(hidden)]
+            pub fn __scafra_register_routes_with(
+                mut router: ::scafra::web::axum::Router,
+                controller: Self,
+            ) -> ::scafra::web::axum::Router {
+                let controller = ::std::sync::Arc::new(controller);
+                #(#registrations)*
+                router
+            }
         }
 
         impl ::scafra::web::ControllerRoutes for #controller {
-            fn register_routes(
-                mut router: ::scafra::web::axum::Router,
+            fn register_routes_with(
+                router: ::scafra::web::axum::Router,
+                controller: Self,
             ) -> ::scafra::web::axum::Router {
-                let controller = ::std::sync::Arc::new(Self::default());
-                #(#registrations)*
-                router
+                Self::__scafra_register_routes_with(router, controller)
+            }
+
+            fn route_metadata() -> &'static [::scafra::web::RouteMetadata] {
+                #metadata_ident
             }
         }
 
@@ -149,10 +183,19 @@ pub(crate) fn expand_routes(item: TokenStream) -> Result<proc_macro2::TokenStrea
             #(#metadata),*
         ];
 
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        fn #register_ident(router: ::scafra::web::axum::Router) -> ::scafra::web::axum::Router {
+            // Graph-composed controllers are registered with their constructed
+            // instances. Legacy default construction is opt-in with
+            // `#[routes(default)]`.
+            #default_registration
+        }
+
         ::scafra::web::__private::inventory::submit! {
             ::scafra::web::ControllerRegistration {
                 controller: stringify!(#controller),
-                register: <#controller as ::scafra::web::ControllerRoutes>::register_routes,
+                register: #register_ident,
                 routes: #metadata_ident,
             }
         }

@@ -12,6 +12,7 @@ proc-macro = true
 
 [dependencies]
 scafra-foundation.workspace = true
+scafra-build.workspace = true
 proc-macro2.workspace = true
 quote.workspace = true
 syn.workspace = true

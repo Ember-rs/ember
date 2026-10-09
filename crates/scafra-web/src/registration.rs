@@ -19,8 +19,28 @@ pub struct ControllerRegistration {
 inventory::collect!(ControllerRegistration);
 
 /// Implemented by generated controller route adapters.
-pub trait ControllerRoutes: Default + Send + Sync + 'static {
-    fn register_routes(router: Router) -> Router;
+pub trait ControllerRoutes: Send + Sync + 'static {
+    fn register_routes(router: Router) -> Router
+    where
+        Self: Default,
+    {
+        Self::register_routes_with(router, Self::default())
+    }
+
+    /// Registers this already constructed controller instance. Generated
+    /// adapters override this method. Handwritten adapters retain the older
+    /// default-constructed fallback when their type implements `Default`.
+    fn register_routes_with(router: Router, _controller: Self) -> Router
+    where
+        Self: Default,
+    {
+        Self::register_routes(router)
+    }
+
+    /// Static routes used by graph-composed startup validation.
+    fn route_metadata() -> &'static [RouteMetadata] {
+        &[]
+    }
 }
 
 /// Implemented by the controller attribute to make its URL prefix available

@@ -54,6 +54,9 @@ pub enum StartupError {
     Core(#[from] scafra_core::ScafraError),
 
     #[error(transparent)]
+    Graph(#[from] scafra_core::GraphError),
+
+    #[error(transparent)]
     Web(#[from] WebError),
 }
 
@@ -64,6 +67,7 @@ impl StartupError {
             Self::Config(_) => "configuration",
             Self::Address(_) => "address",
             Self::Core(_) => "lifecycle",
+            Self::Graph(_) => "dependency_graph",
             Self::Web(_) => "web",
         }
     }
@@ -261,6 +265,23 @@ fn server_shutdown_reason(error: &ServerError) -> ShutdownReason {
 
 /// Starts the standard Scafra server using the default local address.
 pub async fn run() -> std::result::Result<(), StartupError> {
+    run_inner(|_| Ok(None)).await
+}
+
+/// Starts Scafra with a router composed from the application's typed graph.
+/// The builder runs after validated configuration loads and before lifecycle
+/// startup, so providers can use configured values without global state.
+pub async fn run_with_router<F>(build_router: F) -> std::result::Result<(), StartupError>
+where
+    F: FnOnce(&ScafraConfig) -> std::result::Result<axum::Router, StartupError>,
+{
+    run_inner(|config| build_router(config).map(Some)).await
+}
+
+async fn run_inner<F>(build_router: F) -> std::result::Result<(), StartupError>
+where
+    F: FnOnce(&ScafraConfig) -> std::result::Result<Option<axum::Router>, StartupError>,
+{
     let loader = match std::env::var("SCAFRA_PROFILE") {
         Ok(profile) => ConfigLoader::new().profile(profile),
         Err(_) => ConfigLoader::new(),
@@ -293,6 +314,7 @@ pub async fn run() -> std::result::Result<(), StartupError> {
     let address = format!("{}:{}", config.server.host, config.server.port)
         .parse()
         .map_err(|error: std::net::AddrParseError| StartupError::Address(error.to_string()))?;
+    let router = build_router(&config)?;
     let context = ApplicationContext::discover();
     startup!(
         components = context.metadata().len(),
@@ -304,8 +326,21 @@ pub async fn run() -> std::result::Result<(), StartupError> {
     let scheduler = Scheduler::start(&config.scheduler);
     startup!(enabled = config.scheduler.enabled, "scheduler initialized");
     let policy = ShutdownPolicy::default();
-    let (result, reason) =
-        match scafra_web::serve_on_with_policy_and_actuator_and_security_and_request_timeout(
+    let (result, reason) = match if let Some(router) = router {
+        scafra_web::serve_router_on_with_policy_and_actuator_and_security_and_request_timeout(
+            address,
+            policy,
+            config.actuator,
+            config.security,
+            config
+                .server
+                .request_timeout_seconds
+                .map(std::time::Duration::from_secs),
+            router,
+        )
+        .await
+    } else {
+        scafra_web::serve_on_with_policy_and_actuator_and_security_and_request_timeout(
             address,
             policy,
             config.actuator,
@@ -316,13 +351,13 @@ pub async fn run() -> std::result::Result<(), StartupError> {
                 .map(std::time::Duration::from_secs),
         )
         .await
-        {
-            Ok(outcome) => (Ok(()), outcome.reason()),
-            Err(error) => {
-                let reason = server_shutdown_reason(&error);
-                (Err(StartupError::from(error.into_web_error())), reason)
-            }
-        };
+    } {
+        Ok(outcome) => (Ok(()), outcome.reason()),
+        Err(error) => {
+            let reason = server_shutdown_reason(&error);
+            (Err(StartupError::from(error.into_web_error())), reason)
+        }
+    };
     scheduler.stop();
     let shutdown = application
         .shutdown_with(reason, policy)
