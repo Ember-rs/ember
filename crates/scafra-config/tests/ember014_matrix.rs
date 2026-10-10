@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use scafra_config::{Config, ConfigError, ConfigLoader};
+use scafra_config::{Config, ConfigError, ConfigLoader, ScafraConfig};
 use serde::{Deserialize, Serialize};
 
 static NEXT_TEMP_DIR: AtomicU64 = AtomicU64::new(0);
@@ -29,6 +29,20 @@ struct LoggingFixture {
 struct ServerFixture {
     #[serde(default = "default_port")]
     port: u16,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+struct AmbiguousFixtureConfig {
+    #[serde(default)]
+    foo: AmbiguousNestedFixture,
+    #[serde(default)]
+    foo_bar: u16,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+struct AmbiguousNestedFixture {
+    #[serde(default)]
+    bar: u16,
 }
 
 fn default_level() -> String {
@@ -148,7 +162,7 @@ fn profile_sources_are_loaded_in_yaml_yml_properties_order() {
 fn environment_and_explicit_override_precedence_remains_deterministic() {
     let root = TempRoot::new();
     root.write("application.properties", "server.port=8081\n");
-    let prefix = format!("SCAFRA014_MATRIX_{}", std::process::id());
+    let prefix = format!("SCFRA014_MATRIX_{}", std::process::id());
     let environment_key = format!("{prefix}_SERVER_PORT");
     let previous = std::env::var_os(&environment_key);
     std::env::set_var(&environment_key, "8082");
@@ -169,9 +183,9 @@ fn environment_and_explicit_override_precedence_remains_deterministic() {
 }
 
 #[test]
-fn normalized_environment_key_collisions_have_stable_last_write_wins_order() {
+fn environment_names_resolving_to_the_same_path_are_rejected() {
     let root = TempRoot::new();
-    let prefix = format!("SCAFRA014_COLLISION_{}", std::process::id());
+    let prefix = format!("SCFRA014_COLLISION_{}", std::process::id());
     let first_key = format!("{prefix}_LOGGING_LEVEL");
     let second_key = format!("{prefix}_LOGGING__LEVEL");
     let previous_first = std::env::var_os(&first_key);
@@ -193,17 +207,186 @@ fn normalized_environment_key_collisions_have_stable_last_write_wins_order() {
         None => std::env::remove_var(&second_key),
     }
 
-    let config = result.expect("normalized environment keys should load");
+    let error = result.expect_err("two names for one path must be rejected");
+    assert!(matches!(
+        error,
+        ConfigError::InvalidValue {
+            path,
+            source_kind
+        } if path == "logging.level" && source_kind == "environment"
+    ));
+}
+
+#[test]
+fn environment_names_resolve_underscored_fields_and_dynamic_task_keys() {
+    let root = TempRoot::new();
+    let prefix = format!("SCFRA014_UNDERSCORES_{}", std::process::id());
+    let variables = [
+        (format!("{prefix}_SERVER_PORT"), "9000"),
+        (
+            format!("{prefix}_SECURITY_BEARER_TOKEN"),
+            "security-token-70",
+        ),
+        (
+            format!("{prefix}_SECURITY_JWT_ISSUER_URI"),
+            "https://issuer.example.test",
+        ),
+        (
+            format!("{prefix}_ACTUATOR_SECURITY_BEARER_TOKEN"),
+            "actuator-token-70",
+        ),
+        (
+            format!("{prefix}_SCHEDULER_TASKS_CLEANUP_INTERVAL_MS"),
+            "1500",
+        ),
+        (format!("{prefix}_SCHEDULER_TASKS_CLEANUP_ENABLED"), "false"),
+        (format!("{prefix}_BOOTUI_LOCAL_ONLY"), "false"),
+    ];
+    let previous = variables
+        .iter()
+        .map(|(key, _)| (key.clone(), std::env::var_os(key)))
+        .collect::<Vec<_>>();
+    for (key, value) in &variables {
+        std::env::set_var(key, value);
+    }
+
+    let result = ConfigLoader::new()
+        .root(root.path())
+        .env_prefix(&prefix)
+        .load::<ScafraConfig>();
+
+    for (key, value) in previous {
+        match value {
+            Some(value) => std::env::set_var(key, value),
+            None => std::env::remove_var(key),
+        }
+    }
+
+    let config = result.expect("each unique schema path should resolve");
+    assert_eq!(config.server.port, 9000);
     assert_eq!(
-        config.logging.level, "trace",
-        "the stable sorted source order should make the later normalized key win"
+        config.security.bearer_token.as_deref(),
+        Some("security-token-70")
     );
+    assert_eq!(
+        config.security.jwt.issuer_uri.as_deref(),
+        Some("https://issuer.example.test")
+    );
+    assert_eq!(
+        config.actuator.security.bearer_token.as_deref(),
+        Some("actuator-token-70")
+    );
+    assert_eq!(config.scheduler.tasks["cleanup"].interval_ms, Some(1500));
+    assert!(!config.scheduler.tasks["cleanup"].enabled);
+    assert!(!config.bootui.local_only);
+}
+
+#[test]
+fn explicit_environment_paths_preserve_underscores_inside_fields() {
+    let root = TempRoot::new();
+    let prefix = format!("SCFRA014_EXPLICIT_PATH_{}", std::process::id());
+    let environment_key = format!("{prefix}_SECURITY__BEARER_TOKEN");
+    let previous = std::env::var_os(&environment_key);
+    std::env::set_var(&environment_key, "explicit-token-70");
+
+    let result = ConfigLoader::new()
+        .root(root.path())
+        .env_prefix(&prefix)
+        .load::<ScafraConfig>();
+
+    match previous {
+        Some(value) => std::env::set_var(&environment_key, value),
+        None => std::env::remove_var(&environment_key),
+    }
+
+    let config = result.expect("double underscores should separate path levels");
+    assert_eq!(
+        config.security.bearer_token.as_deref(),
+        Some("explicit-token-70")
+    );
+}
+
+#[test]
+fn ambiguous_and_unknown_environment_names_fail_deterministically() {
+    let root = TempRoot::new();
+    let ambiguous_prefix = format!("SCFRA014_AMBIGUOUS_{}", std::process::id());
+    let ambiguous_key = format!("{ambiguous_prefix}_FOO_BAR");
+    let previous_ambiguous = std::env::var_os(&ambiguous_key);
+    std::env::set_var(&ambiguous_key, "7");
+    let ambiguous_result = ConfigLoader::new()
+        .root(root.path())
+        .env_prefix(&ambiguous_prefix)
+        .load::<AmbiguousFixtureConfig>();
+    match previous_ambiguous {
+        Some(value) => std::env::set_var(&ambiguous_key, value),
+        None => std::env::remove_var(&ambiguous_key),
+    }
+    assert!(matches!(
+        ambiguous_result,
+        Err(ConfigError::InvalidValue {
+            path,
+            source_kind
+        }) if path == "foo_bar" && source_kind == "environment variable name"
+    ));
+
+    let unknown_root = TempRoot::new();
+    unknown_root.write("application.yaml", "server:\n  unknown_field: 10\n");
+    let unknown_prefix = format!("SCFRA014_UNKNOWN_{}", std::process::id());
+    let unknown_key = format!("{unknown_prefix}_SERVER_UNKNOWN_FIELD");
+    let previous_unknown = std::env::var_os(&unknown_key);
+    std::env::set_var(&unknown_key, "7");
+    let unknown_result = ConfigLoader::new()
+        .root(unknown_root.path())
+        .env_prefix(&unknown_prefix)
+        .load::<FixtureConfig>();
+    match previous_unknown {
+        Some(value) => std::env::set_var(&unknown_key, value),
+        None => std::env::remove_var(&unknown_key),
+    }
+    assert!(matches!(
+        unknown_result,
+        Err(ConfigError::InvalidValue {
+            path,
+            source_kind
+        }) if path == "server_unknown_field" && source_kind == "environment variable name"
+    ));
+}
+
+#[test]
+fn secret_environment_values_stay_redacted_from_decode_diagnostics() {
+    let root = TempRoot::new();
+    let prefix = format!("SCFRA014_SECRET_REDACTION_{}", std::process::id());
+    let secret_key = format!("{prefix}_SECURITY__JWT__SECRET");
+    let invalid_key = format!("{prefix}_SECURITY__JWT__ENABLED");
+    let previous_secret = std::env::var_os(&secret_key);
+    let previous_invalid = std::env::var_os(&invalid_key);
+    let secret_value = "jwt-secret-redaction-sentinel-70";
+    std::env::set_var(&secret_key, secret_value);
+    std::env::set_var(&invalid_key, "not-a-boolean");
+
+    let result = ConfigLoader::new()
+        .root(root.path())
+        .env_prefix(&prefix)
+        .load::<ScafraConfig>();
+
+    match previous_secret {
+        Some(value) => std::env::set_var(&secret_key, value),
+        None => std::env::remove_var(&secret_key),
+    }
+    match previous_invalid {
+        Some(value) => std::env::set_var(&invalid_key, value),
+        None => std::env::remove_var(&invalid_key),
+    }
+
+    let error = result.expect_err("the invalid boolean should fail decoding");
+    assert!(!error.to_string().contains(secret_value));
+    assert!(!format!("{error:?}").contains(secret_value));
 }
 
 #[test]
 fn invalid_environment_values_report_the_path_and_source_without_the_value() {
     let root = TempRoot::new();
-    let prefix = format!("SCAFRA014_INVALID_{}", std::process::id());
+    let prefix = format!("SCFRA014_INVALID_{}", std::process::id());
     let environment_key = format!("{prefix}_SERVER_PORT");
     let secret_value = "not-a-port-secret";
     let previous = std::env::var_os(&environment_key);
@@ -235,7 +418,7 @@ fn non_unicode_environment_values_fail_without_panicking_or_echoing_values() {
     use std::os::unix::ffi::OsStringExt;
 
     let root = TempRoot::new();
-    let prefix = format!("SCAFRA014_NON_UTF8_{}", std::process::id());
+    let prefix = format!("SCFRA014_NON_UTF8_{}", std::process::id());
     let environment_key = format!("{prefix}_SERVER_PORT");
     let previous = std::env::var_os(&environment_key);
     std::env::set_var(
@@ -454,7 +637,7 @@ fn scafra_config_uses_the_canonical_typed_logging_contract() {
 
     let config = ConfigLoader::new()
         .root(root.path())
-        .env_prefix(format!("SCAFRA014_TYPED_{}", std::process::id()))
+        .env_prefix(format!("SCFRA014_TYPED_{}", std::process::id()))
         .load::<scafra_config::ScafraConfig>()
         .expect("typed logging configuration should load");
 
@@ -476,7 +659,7 @@ fn invalid_typed_logging_values_are_redacted_and_source_aware() {
 
     let error = ConfigLoader::new()
         .root(root.path())
-        .env_prefix(format!("SCAFRA014_TYPED_INVALID_{}", std::process::id()))
+        .env_prefix(format!("SCFRA014_TYPED_INVALID_{}", std::process::id()))
         .load::<scafra_config::ScafraConfig>()
         .expect_err("invalid typed logging values must fail before startup");
     let text = error.to_string();

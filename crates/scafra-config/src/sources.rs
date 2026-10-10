@@ -13,6 +13,8 @@ use crate::{
         validate_profile, SOURCE_EXTENSIONS,
     },
 };
+
+const SCAFRA_ENV_CONTROLS: [&str; 3] = ["PROFILE", "DEV_CHILD", "DEV_RELOAD"];
 pub fn load_yaml<T: DeserializeOwned>(path: impl AsRef<Path>) -> Result<T, ConfigError> {
     let path = path.as_ref();
     let display_path = path.display().to_string();
@@ -184,7 +186,8 @@ impl ConfigLoader {
         let profile = self.selected_profile()?;
         validate_profile(profile.as_deref())?;
 
-        let mut merged = serde_yaml::to_value(T::default()).map_err(|_| ConfigError::Serialize)?;
+        let schema = serde_yaml::to_value(T::default()).map_err(|_| ConfigError::Serialize)?;
+        let mut merged = schema.clone();
         let mut origins = BTreeMap::new();
 
         let config_root = self.configuration_root();
@@ -205,7 +208,7 @@ impl ConfigLoader {
             }
         }
 
-        self.merge_environment(&mut merged, &mut origins)?;
+        self.merge_environment(&mut merged, &schema, &mut origins)?;
         for (path, value) in &self.overrides {
             set_path(
                 &mut merged,
@@ -300,6 +303,7 @@ impl ConfigLoader {
     fn merge_environment(
         &self,
         target: &mut serde_yaml::Value,
+        schema: &serde_yaml::Value,
         origins: &mut BTreeMap<String, String>,
     ) -> Result<(), ConfigError> {
         let prefix = format!("{}_", self.env_prefix.to_ascii_uppercase());
@@ -313,14 +317,27 @@ impl ConfigLoader {
             let Some(raw_path) = key.strip_prefix(&prefix) else {
                 continue;
             };
-            let path = raw_path
-                .split('_')
-                .filter(|part| !part.is_empty())
-                .map(str::to_ascii_lowercase)
-                .collect::<Vec<_>>()
-                .join(".");
-            if path.is_empty() {
+            if self.env_prefix.eq_ignore_ascii_case("SCAFRA")
+                && SCAFRA_ENV_CONTROLS
+                    .iter()
+                    .any(|control| raw_path.eq_ignore_ascii_case(control))
+            {
                 continue;
+            }
+            let path = resolve_environment_path(schema, raw_path).map_err(|()| {
+                ConfigError::InvalidValue {
+                    path: raw_path.to_ascii_lowercase(),
+                    source_kind: "environment variable name".to_owned(),
+                }
+            })?;
+            if origins
+                .get(&path)
+                .is_some_and(|source| source == "environment")
+            {
+                return Err(ConfigError::InvalidValue {
+                    path,
+                    source_kind: "environment".to_owned(),
+                });
             }
             let value = value.into_string().map_err(|_| ConfigError::InvalidValue {
                 path: path.clone(),
@@ -336,6 +353,176 @@ impl ConfigLoader {
             )?;
         }
         Ok(())
+    }
+}
+
+/// Resolves an environment suffix to a serialized configuration path.
+///
+/// Double underscores are the explicit path separator. Single-underscore
+/// names retain the historical spelling when the serialized schema identifies
+/// exactly one path.
+fn resolve_environment_path(target: &serde_yaml::Value, raw_path: &str) -> Result<String, ()> {
+    if raw_path.is_empty() || !valid_environment_name(raw_path) {
+        return Err(());
+    }
+
+    if raw_path.contains("__") {
+        let parts = raw_path
+            .split("__")
+            .map(str::to_ascii_lowercase)
+            .collect::<Vec<_>>();
+        if parts.iter().any(String::is_empty) || !path_exists(target, &parts, "") {
+            return Err(());
+        }
+        return Ok(parts.join("."));
+    }
+
+    let tokens = raw_path.split('_').collect::<Vec<_>>();
+    if tokens.iter().any(|token| token.is_empty()) {
+        return Err(());
+    }
+    let mut candidates = std::collections::BTreeSet::new();
+    legacy_path_candidates(target, &tokens, 0, "", &mut Vec::new(), &mut candidates);
+    if candidates.len() != 1 {
+        return Err(());
+    }
+    candidates.into_iter().next().ok_or(())
+}
+
+fn valid_environment_name(name: &str) -> bool {
+    name.chars()
+        .all(|character| character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+}
+
+fn path_exists(value: &serde_yaml::Value, parts: &[String], parent_path: &str) -> bool {
+    let Some((part, remaining)) = parts.split_first() else {
+        return !parent_path.is_empty();
+    };
+    let Some(mapping) = value.as_mapping() else {
+        return false;
+    };
+    let key = serde_yaml::Value::String(part.clone());
+    let child_path = append_config_path(parent_path, part);
+
+    if let Some(child) = mapping.get(&key) {
+        return remaining.is_empty()
+            || path_exists(child, remaining, &child_path)
+            || (parent_path == "scheduler.tasks"
+                && scheduled_task_schema()
+                    .is_some_and(|schema| path_exists(&schema, remaining, &child_path)));
+    }
+    if is_omitted_secret_field(parent_path, part) {
+        return remaining.is_empty();
+    }
+    if parent_path == "scheduler.tasks" && !remaining.is_empty() {
+        return scheduled_task_schema()
+            .is_some_and(|schema| path_exists(&schema, remaining, &child_path));
+    }
+    parent_path != "scheduler.tasks" && mapping.is_empty() && remaining.is_empty()
+}
+
+fn legacy_path_candidates(
+    value: &serde_yaml::Value,
+    tokens: &[&str],
+    offset: usize,
+    parent_path: &str,
+    current_path: &mut Vec<String>,
+    candidates: &mut std::collections::BTreeSet<String>,
+) {
+    if offset == tokens.len() {
+        if !current_path.is_empty() {
+            candidates.insert(current_path.join("."));
+        }
+        return;
+    }
+    let Some(mapping) = value.as_mapping() else {
+        return;
+    };
+
+    for (key, child) in mapping {
+        let Some(key) = key.as_str() else {
+            continue;
+        };
+        let key_tokens = key.split('_').collect::<Vec<_>>();
+        let end = offset + key_tokens.len();
+        if end > tokens.len()
+            || !key_tokens
+                .iter()
+                .zip(&tokens[offset..end])
+                .all(|(left, right)| left.eq_ignore_ascii_case(right))
+        {
+            continue;
+        }
+        current_path.push(key.to_owned());
+        let child_path = append_config_path(parent_path, key);
+        legacy_path_candidates(child, tokens, end, &child_path, current_path, candidates);
+        current_path.pop();
+    }
+
+    for secret_field in omitted_secret_fields(parent_path) {
+        let key_tokens = secret_field.split('_').collect::<Vec<_>>();
+        let end = offset + key_tokens.len();
+        if end == tokens.len()
+            && key_tokens
+                .iter()
+                .zip(&tokens[offset..end])
+                .all(|(left, right)| left.eq_ignore_ascii_case(right))
+        {
+            current_path.push((*secret_field).to_owned());
+            candidates.insert(current_path.join("."));
+            current_path.pop();
+        }
+    }
+
+    if parent_path == "scheduler.tasks" {
+        let Some(task_schema) = scheduled_task_schema() else {
+            return;
+        };
+        for end in (offset + 1)..tokens.len() {
+            let task_name = tokens[offset..end].join("_").to_ascii_lowercase();
+            current_path.push(task_name.clone());
+            legacy_path_candidates(
+                &task_schema,
+                tokens,
+                end,
+                &append_config_path(parent_path, &task_name),
+                current_path,
+                candidates,
+            );
+            current_path.pop();
+        }
+    } else if parent_path != "scheduler.tasks" && mapping.is_empty() && offset + 1 == tokens.len() {
+        let key = tokens[offset].to_ascii_lowercase();
+        current_path.push(key);
+        candidates.insert(current_path.join("."));
+        current_path.pop();
+    }
+}
+
+fn omitted_secret_fields(parent_path: &str) -> &'static [&'static str] {
+    // These serde-skipped keys are intentionally absent from the serialized
+    // default, but remain valid deserialization targets for secret injection.
+    match parent_path {
+        "security.jwt" => &["secret"],
+        "security.basic" => &["password"],
+        "actuator.security" => &["bearer_token"],
+        _ => &[],
+    }
+}
+
+fn is_omitted_secret_field(parent_path: &str, field: &str) -> bool {
+    omitted_secret_fields(parent_path).contains(&field)
+}
+
+fn scheduled_task_schema() -> Option<serde_yaml::Value> {
+    serde_yaml::to_value(scafra_scheduler::ScheduledTaskConfig::default()).ok()
+}
+
+fn append_config_path(parent_path: &str, segment: &str) -> String {
+    if parent_path.is_empty() {
+        segment.to_owned()
+    } else {
+        format!("{parent_path}.{segment}")
     }
 }
 

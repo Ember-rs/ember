@@ -571,7 +571,7 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
     let original_bean = fs::read_to_string(&bean_path).unwrap();
     let fallible_bean = original_bean.replace(
         "pub fn greeting_prefix() -> GreetingPrefix {\n    GreetingPrefix(String::from(\"Hello,\"))\n}",
-        "pub fn greeting_prefix() -> std::result::Result<GreetingPrefix, std::io::Error> {\n    if std::env::var_os(\"SCAFRA_FAIL_PROVIDER\").is_some() {\n        Err(std::io::Error::other(\"secret provider detail\"))\n    } else {\n        Ok(GreetingPrefix(String::from(\"Hello,\")))\n    }\n}",
+        "pub fn greeting_prefix() -> std::result::Result<GreetingPrefix, std::io::Error> {\n    if std::env::var_os(\"SCFRA_FAIL_PROVIDER\").is_some() {\n        Err(std::io::Error::other(\"secret provider detail\"))\n    } else {\n        Ok(GreetingPrefix(String::from(\"Hello,\")))\n    }\n}",
     );
     assert_ne!(fallible_bean, original_bean);
     fs::write(bean_path, fallible_bean).unwrap();
@@ -581,7 +581,7 @@ fn generated_project_startup_failure_is_bounded_and_reaped() {
     let child = Command::new(&executable)
         .current_dir(&project)
         .env("SCAFRA_SERVER_PORT", "18091")
-        .env("SCAFRA_FAIL_PROVIDER", "1")
+        .env("SCFRA_FAIL_PROVIDER", "1")
         .env("SCAFRA_DEV_CHILD", "1")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
