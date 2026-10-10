@@ -19,7 +19,9 @@ pub use scafra_macros::{
     routes, service, Config,
 };
 pub use scafra_scheduler::{register_scheduled_task, ScheduledTaskConfig, Scheduler};
-pub use scafra_security::{BasicAuthConfig, JwtConfig, SecurityConfig};
+pub use scafra_security::{
+    AuthorizationMode, AuthorizationPolicy, BasicAuthConfig, JwtConfig, SecurityConfig,
+};
 pub use scafra_web as web;
 pub use tracing::{debug, error, info, trace, warn};
 
@@ -32,8 +34,9 @@ pub use scafra_web::{
     build_router, join_paths, run_on, run_on_with_log_level, serve_on, serve_on_with_actuator,
     serve_on_with_policy, serve_on_with_policy_and_actuator,
     serve_on_with_policy_and_actuator_and_security, serve_on_with_shutdown, shutdown_channel,
-    AppError, ControllerPrefix, ControllerRegistration, ControllerRoutes, JsonBody, RouteMetadata,
-    ServerError, ServerOutcome, ShutdownFuture, ShutdownHandle, ShutdownRequestError, WebError,
+    AppError, ControllerPrefix, ControllerRegistration, ControllerRoutes, JsonBody,
+    RouteAuthorizationMetadata, RouteMetadata, ServerError, ServerOutcome, ShutdownFuture,
+    ShutdownHandle, ShutdownRequestError, WebError,
 };
 
 pub type Result<T> = std::result::Result<T, AppError>;
@@ -259,6 +262,11 @@ fn server_shutdown_reason(error: &ServerError) -> ShutdownReason {
         ServerError::Web(WebError::DuplicateRoute { .. } | WebError::Bind { .. }) => {
             ShutdownReason::StartupFailure
         }
+        ServerError::Web(WebError::Server(source))
+            if source.kind() == std::io::ErrorKind::InvalidInput =>
+        {
+            ShutdownReason::StartupFailure
+        }
         ServerError::Web(WebError::Server(_)) => ShutdownReason::RuntimeFailure,
     }
 }
@@ -447,13 +455,14 @@ pub mod prelude {
         bean, build_router, component, controller, debug, delete, error, get, info, logger, post,
         post_processor, put, register_health_check, register_scheduled_task, repository, routes,
         service, startup, trace, warn, ActuatorConfig, AppError, Application, ApplicationContext,
-        BacktraceMode, Bean, BeanPostProcessor, BootUiConfig, ComponentKind, ComponentMetadata,
-        Config, ConfigError, ConfigLoader, ConfigProperties, ControllerPrefix,
-        ControllerRegistration, ControllerRoutes, GraphDescriptor, GraphEdgeDescriptor, GraphError,
-        GraphNodeDescriptor, GraphNodeKind, GraphPhase, GraphPlan, JsonBody, LogLevel,
-        LoggingConfig, Properties, ProviderFailure, Result, RouteMetadata, ScafraConfig,
-        ScafraError, SchedulerConfig, ServerConfig, ServerError, ServerOutcome, ShutdownPolicy,
-        ShutdownReason, StartupError, ValidationError, WebError,
+        AuthorizationMode, AuthorizationPolicy, BacktraceMode, Bean, BeanPostProcessor,
+        BootUiConfig, ComponentKind, ComponentMetadata, Config, ConfigError, ConfigLoader,
+        ConfigProperties, ControllerPrefix, ControllerRegistration, ControllerRoutes,
+        GraphDescriptor, GraphEdgeDescriptor, GraphError, GraphNodeDescriptor, GraphNodeKind,
+        GraphPhase, GraphPlan, JsonBody, LogLevel, LoggingConfig, Properties, ProviderFailure,
+        Result, RouteMetadata, ScafraConfig, ScafraError, SchedulerConfig, ServerConfig,
+        ServerError, ServerOutcome, ShutdownPolicy, ShutdownReason, StartupError, ValidationError,
+        WebError,
     };
     pub use axum::{
         extract::{Json, Path, Query},

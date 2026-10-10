@@ -59,9 +59,12 @@ pub fn finish_router(
     request_timeout: Option<Duration>,
 ) -> Result<Router, WebError> {
     validate_routes(routes, actuator)?;
+    let route_policies = authorization_metadata_for(routes);
+    validate_security_config(security, &route_policies)?;
     let router = router.layer(DefaultBodyLimit::max(1024 * 1024));
 
-    let router = scafra_security::layer(router, security.clone());
+    let router =
+        scafra_security::layer_with_route_policies(router, security.clone(), route_policies);
     let router = with_request_timeout(router, request_timeout);
     Ok(router.layer(TraceLayer::new_for_http().make_span_with(
         |request: &axum::http::Request<_>| {
@@ -72,6 +75,53 @@ pub fn finish_router(
             )
         },
     )))
+}
+
+fn authorization_metadata_for(
+    routes: &[crate::registration::RouteMetadata],
+) -> Vec<scafra_security::RouteAuthorizationMetadata> {
+    inventory::iter::<scafra_security::ControllerAuthorizationRegistration>()
+        .flat_map(|registration| registration.routes.iter().copied())
+        .filter(|policy| {
+            routes.iter().any(|route| {
+                route.controller == policy.controller
+                    && route.method == policy.method
+                    && route.prefix == policy.prefix
+                    && route.path == policy.path
+            })
+        })
+        .collect()
+}
+
+fn validate_security_config(
+    security: &scafra_security::SecurityConfig,
+    policies: &[scafra_security::RouteAuthorizationMetadata],
+) -> Result<(), WebError> {
+    if security.enabled {
+        security.validate().map_err(security_configuration_error)?;
+    }
+    let has_protected_route = policies.iter().any(|policy| {
+        if policy.route_policy.mode == scafra_security::AuthorizationMode::Public {
+            false
+        } else if policy.route_policy.mode == scafra_security::AuthorizationMode::Protected {
+            true
+        } else {
+            policy.controller_policy.mode == scafra_security::AuthorizationMode::Protected
+        }
+    });
+    if has_protected_route && !security.enabled {
+        return Err(security_configuration_error(
+            "security must be enabled when a controller or route requires authentication",
+        ));
+    }
+    Ok(())
+}
+
+fn security_configuration_error(reason: &'static str) -> WebError {
+    WebError::Server(std::io::Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!("invalid security configuration: {reason}"),
+    ))
 }
 
 /// Validates route metadata before any router merge occurs.

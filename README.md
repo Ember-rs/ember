@@ -268,7 +268,9 @@ security:
 For local development, replace `issuer_uri` with a development-only
 `secret`. A direct `jwk_set_uri` can be used when issuer discovery is not
 available; production secrets should be supplied through Scafra's environment
-configuration.
+configuration. See the [HTTP security guide](docs/security.md) for controller
+and route policies, credential claim formats, `401`/`403` behavior, and
+migration details.
 
 Application logging is available directly from the prelude. Scafra re-exports
 structured `tracing` macros, so services do not need to call the foundation
