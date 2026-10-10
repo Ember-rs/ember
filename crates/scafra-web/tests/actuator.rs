@@ -6,7 +6,7 @@ use axum::{
 use scafra_web::{build_router_with_actuator, ActuatorConfig, ActuatorSecurity, EndpointSelection};
 use tower::util::ServiceExt;
 
-fn test_health_check() -> bool {
+async fn test_health_check() -> bool {
     true
 }
 

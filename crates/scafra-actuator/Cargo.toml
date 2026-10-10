@@ -11,3 +11,5 @@ description = "Spring Boot-style operational endpoints for Scafra"
 axum.workspace = true
 inventory.workspace = true
 serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true

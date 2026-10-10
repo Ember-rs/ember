@@ -1083,6 +1083,8 @@ dependencies = [
  "axum",
  "inventory",
  "serde",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
