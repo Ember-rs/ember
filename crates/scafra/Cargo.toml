@@ -26,6 +26,7 @@ tracing.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+jsonwebtoken.workspace = true
 serde.workspace = true
 tower.workspace = true
 tokio.workspace = true

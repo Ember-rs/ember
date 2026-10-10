@@ -1,4 +1,5 @@
 use axum::Router;
+use scafra_security::AuthorizationPolicy;
 
 /// One route as declared by a controller.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,4 +48,8 @@ pub trait ControllerRoutes: Send + Sync + 'static {
 /// to the generated route table without runtime reflection.
 pub trait ControllerPrefix {
     const PREFIX: &'static str;
+
+    /// Controller-wide policy inherited by routes unless explicitly
+    /// overridden. The default keeps handwritten implementations compatible.
+    const AUTHORIZATION_POLICY: AuthorizationPolicy = AuthorizationPolicy::inherit();
 }

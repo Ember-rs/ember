@@ -12,6 +12,8 @@ Axum, Tokio, Tower, Serde, and `tracing`.
   model, and design boundaries.
 - [Generated code](generated-code.md) — see what `scafra new` creates and how
   source discovery works.
+- [HTTP security](security.md) — configure authentication and define
+  controller-level and route-level authorization policies.
 - [Dependency graph guide](guides/dependency-graph.md) — understand the typed
   graph used by standard startup and the custom build-script route.
 - [Publishing](publishing.md) — configure and trigger a crates.io release.

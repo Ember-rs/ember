@@ -29,7 +29,10 @@ pub use routing::{
 };
 pub use scafra_actuator::register_health_check;
 pub use scafra_actuator::{ActuatorConfig, ActuatorSecurity, EndpointSelection, HealthConfig};
-pub use scafra_security::{BasicAuthConfig, JwtConfig, SecurityConfig};
+pub use scafra_security::{
+    AuthorizationMode, AuthorizationPolicy, BasicAuthConfig, ControllerAuthorizationRegistration,
+    JwtConfig, RouteAuthorizationMetadata, SecurityConfig,
+};
 pub use server::{
     run, run_on, run_on_with_log_level, serve_on, serve_on_with_actuator, serve_on_with_policy,
     serve_on_with_policy_and_actuator, serve_on_with_policy_and_actuator_and_security,

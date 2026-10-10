@@ -1060,6 +1060,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "inventory",
+ "jsonwebtoken",
  "scafra-actuator",
  "scafra-config",
  "scafra-core",
@@ -1182,6 +1183,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "base64 0.22.1",
+ "inventory",
  "jsonwebtoken",
  "reqwest",
  "serde",
