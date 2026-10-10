@@ -93,7 +93,7 @@ fn request_timeout_loads_with_precedence_and_is_validated() {
     fs::create_dir_all(&root).unwrap();
     fs::write(root.join("application.yaml"), "server:\n  timeout: 12\n").unwrap();
 
-    let env_prefix = format!("SCAFRA_TIMEOUT_TEST_{}", std::process::id());
+    let env_prefix = format!("SCFRA_TIMEOUT_TEST_{}", std::process::id());
     let env_key = format!("{env_prefix}_SERVER_TIMEOUT");
     std::env::set_var(&env_key, "24");
     let from_environment = ConfigLoader::new()
@@ -114,10 +114,7 @@ fn request_timeout_loads_with_precedence_and_is_validated() {
 
     let invalid = ConfigLoader::new()
         .root(&root)
-        .env_prefix(format!(
-            "SCAFRA_TIMEOUT_TEST_INVALID_{}",
-            std::process::id()
-        ))
+        .env_prefix(format!("SCFRA_TIMEOUT_TEST_INVALID_{}", std::process::id()))
         .override_value("server.timeout", "0")
         .load_validated::<ScafraConfig>()
         .expect_err("zero seconds cannot create a useful request deadline");
@@ -159,7 +156,7 @@ fn configuration_precedence_is_defaults_yaml_profile_environment_then_override()
     )
     .unwrap();
 
-    let env_prefix = format!("SCAFRA_TEST_{}", std::process::id());
+    let env_prefix = format!("SCFRA_TEST_{}", std::process::id());
     let env_key = format!("{env_prefix}_SERVER_PORT");
     std::env::set_var(&env_key, "8082");
 

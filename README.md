@@ -509,9 +509,19 @@ typed `logging.level` without echoing the directive.
 precedence over `scafra.profiles.active` in the base file; if neither is set,
 Scafra uses the `default` profile. Profile files are applied in YAML, YML, then
 properties order. Environment names after the `SCAFRA_` prefix map to
-lowercase dotted paths (`SCAFRA_SERVER_PORT` becomes `server.port`); matching
-variables are processed in sorted name order. `ConfigLoader::profile` selects
-a profile explicitly in application code, while `override_value` is the final
+configuration paths. The historical form `SCAFRA_SERVER_PORT` resolves to
+`server.port` when the serialized schema has one matching path. Use a double
+underscore (`__`) to mark a path boundary explicitly; single underscores then
+remain part of a field name. For example, `SCAFRA_SECURITY__BEARER_TOKEN` sets
+`security.bearer_token`, and
+`SCAFRA_SCHEDULER__TASKS__CLEANUP__INTERVAL_MS` sets
+`scheduler.tasks.cleanup.interval_ms`. A historical single-underscore name is
+accepted only when it resolves to one schema path. Unknown, ambiguous, or
+duplicate environment overrides fail loading. Matching variables are
+processed in sorted name order. `SCAFRA_PROFILE` selects the profile before
+files are merged; the runner's `SCAFRA_DEV_CHILD` and `SCAFRA_DEV_RELOAD`
+controls are not configuration overrides. `ConfigLoader::profile` selects a
+profile explicitly in application code, while `override_value` is the final
 per-key override for programmatic callers. Missing candidate files are
 optional, but unreadable, malformed, or incorrectly typed values fail loading.
 
